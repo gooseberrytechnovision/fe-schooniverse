@@ -1,0 +1,13 @@
+.table {
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  
+  .table th {
+    background-color: #f8f9fa;
+  }
+  
+  .btn-light {
+    border: 1px solid #ddd;
+  }
+  

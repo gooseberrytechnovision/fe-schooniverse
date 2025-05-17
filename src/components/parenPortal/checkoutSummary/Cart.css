@@ -1,0 +1,18 @@
+.cart-item {
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.cart-item img {
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.cart-item .btn {
+  min-width: 40px;
+}
+
+.btn-outline-danger {
+  font-size: 14px;
+}

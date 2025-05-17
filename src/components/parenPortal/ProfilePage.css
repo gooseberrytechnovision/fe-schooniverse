@@ -1,0 +1,83 @@
+.profile-container {
+  max-width: 500px; /* Set a fixed width */
+  margin: 40px auto; /* Center the container */
+  padding: 20px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  text-align: center; /* Center profile image and title */
+}
+
+.profile-image {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.profile-title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+.profile-card {
+  padding: 15px;
+  border-radius: 5px;
+  background: #f9f9f9;
+  text-align: left; /* Align text properly inside card */
+}
+
+.profile-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid #ddd;
+}
+
+.profile-row:last-child {
+  border-bottom: none;
+}
+
+.icon {
+  font-size: 1.2rem;
+  color: #007bff;
+}
+
+.update-btn {
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+.update-btn:hover {
+  background-color: #218838;
+}
+
+.position-relative {
+  position: relative;
+  display: inline-block;
+}
+
+.profile-image {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.edit-icon {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background-color: white;
+  padding: 5px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 26px;
+  box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.2);
+}

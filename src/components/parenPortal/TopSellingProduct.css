@@ -1,0 +1,25 @@
+.next-btn {
+  position: "absolute";
+  right: "10px";
+  top: "50%";
+  transform: "translateY(-50%)";
+  background: "#fff";
+  border: "none";
+  cursor: "pointer";
+}
+
+.back-btn {
+  position: "absolute";
+  left: "10px";
+  top: "50%";
+  transform: "translateY(-50%)";
+  background: "#fff";
+  border: "none";
+  cursor: "pointer";
+}
+
+.container-div {
+  position: "relative";
+  overflow: "hidden";
+  width: "100%";
+}

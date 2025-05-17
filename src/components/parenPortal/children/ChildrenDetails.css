@@ -1,0 +1,35 @@
+.child-circle {
+  width: 160px;
+  height: 160px;
+  border: 2px solid #007bff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  transition: all 0.3s ease-in-out;
+  cursor: pointer;
+  background-color: #e9e9f3;
+}
+
+.child-circle.selected {
+  color: white;
+  border: 4px solid #007bff;
+}
+
+.child-icon {
+  font-size: 50px;
+  color: #007bff;
+}
+
+.child-name {
+  font-size: 16px;
+  font-weight: 500;
+  margin-top: 5px;
+  color: #666;
+}
+
+.child-name.selected-text {
+  color: #007bff;
+  font-weight: bold;
+}

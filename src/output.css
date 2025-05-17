@@ -1,0 +1,89 @@
+
+
+:root {
+  --primary-color: #0d6efd;
+  --secondary-color: #6c757d;
+}
+
+/* Navbar */
+.navbar-brand {
+  font-size: 1.25rem;
+  font-weight: bold;
+  
+}
+.navbar{
+  opacity: 1;
+  background-color: rgba(0, 50, 164, 0.8);
+  position: absolute;
+  width: 100%;
+  top: 0;
+}
+
+/* Dashboard */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  padding: 1.5rem;
+}
+
+.welcome-wrapper {
+  height: 244px;
+}
+
+.welcome-box {
+  background: #0c0c0c;
+  opacity: 70%;
+}
+
+.banner {
+  background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
+    url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80');
+  background-size: cover;
+  background-position: center;
+  height: 300px;
+}
+
+.banner h1 {
+  font-size: 2.5rem;
+  font-weight: bold;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 10px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+}
+
+/* Footer */
+.footer {
+  background-color: #212529;
+  color: white;
+  padding: 2rem 0;
+  margin-top: auto;
+}
+
+.footer h5 {
+  color: var(--primary-color);
+}
+
+.footer a {
+  color: white;
+  text-decoration: none;
+}
+
+.footer a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}

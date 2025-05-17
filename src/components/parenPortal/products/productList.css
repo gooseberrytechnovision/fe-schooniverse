@@ -1,0 +1,24 @@
+.product-card {
+  transition: transform 0.3s;
+  cursor: pointer;
+}
+.product-card:hover {
+  transform: scale(1.03);
+}
+.product-card .card-img-overlay {
+  transition: opacity 0.3s;
+  opacity: 0;
+}
+.product-card:hover .card-img-overlay {
+  opacity: 1;
+}
+.bundle-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px 10px; /* Adds spacing between label and value */
+  text-align: left;
+}
+
+.bundle-details strong {
+  text-align: right; /* Align labels to the right */
+}
