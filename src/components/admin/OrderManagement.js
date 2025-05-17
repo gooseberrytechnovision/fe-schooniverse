@@ -1,9 +1,18 @@
 import React, { useEffect, useState, useMemo } from "react";
 import FullPageSpinner from "../layout/FullPageSpinner";
 import { Modal, Button, Form } from "react-bootstrap";
-import { fetchAllOrders, updateOrderStatus, updateTransactionStatus } from "../../actions/product";
+import {
+  fetchAllOrders,
+  updateOrderStatus,
+  updateTransactionStatus,
+  getProductsByIds,
+  getSizesInBulk
+} from "../../actions/product";
+import { toast } from "react-toastify";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
-const OrderManagement = ({isVendor = false}) => {
+const OrderManagement = ({ isVendor = false }) => {
   const [orders, setOrders] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
@@ -14,6 +23,9 @@ const OrderManagement = ({isVendor = false}) => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [productsMap, setProductsMap] = useState([]);
+  const [barcode, setBarcode] = useState("");
+  const barcodeInputRef = React.useRef(null);
   const itemsPerPage = 10;
 
   useEffect(() => {
@@ -67,6 +79,7 @@ const OrderManagement = ({isVendor = false}) => {
   const onView = (order) => {
     setSelectedOrder(order);
     setNewStatus(order.status); // Set initial status
+    setBarcode(order.trackingId);
     setShowModal(true);
   };
 
@@ -75,7 +88,7 @@ const OrderManagement = ({isVendor = false}) => {
     setLoading(true);
     try {
       if (isVendor) {
-        await updateOrderStatus(selectedOrder.id, newStatus);
+        await updateOrderStatus(selectedOrder.id, {status: newStatus, trackingId: barcode});
       } else {
         await updateTransactionStatus(selectedOrder.id, newStatus);
       }
@@ -83,7 +96,7 @@ const OrderManagement = ({isVendor = false}) => {
         prevOrders.map((order) =>
           order.id === selectedOrder.id
             ? isVendor
-              ? { ...order, status: newStatus }
+              ? { ...order, status: newStatus, trackingId: barcode }
               : { ...order, transactionStatus: newStatus }
             : order
         )
@@ -97,54 +110,270 @@ const OrderManagement = ({isVendor = false}) => {
   };
 
   // Export to CSV function
-  const exportToCSV = () => {
-    const headers = [
-      "ID",
-      "Application code",
-      "Parent Name",
-      "Contact Number",
-      "Total Price",
-      "Status",
-      "Order Date",
-      "Student",
-      "Class",
-      "Section",
-      "Item Name",
-      "Item Quantity",
-      "Item Price",
-    ];
+  const exportToCSV = async () => {
+    setLoading(true);
 
-    const rows = filteredOrders.flatMap((order) => {
-      // Iterate through the items of each order and flatten the data
-      return order.items.map((item) => [
-        order.id,
-        order?.payments[0]?.applicationCode ?? "--",
-        order.parent?.parentName,
-        order.parent?.phoneNumber,
-        order.totalPrice,
-        order.status,
-        new Date(order.createdAt).toLocaleDateString(),
-        item.student?.studentName,
-        item.student?.class,
-        item.student?.section,
-        item.bundle?.name,
-        item.quantity,
-        item.bundle?.totalPrice,
-      ]);
-    });
+    try {
+      const headers = [
+        "S.No",
+        "USID",
+        "Student Name",
+        "Gender",
+        "Class",
+        "Section",
+        "House",
+        "Order ID",
+        "Product Name",
+        "Size",
+        "Quantity"
+      ];
 
-    let csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n";
-    rows.forEach((row) => {
-      csvContent += row.join(",") + "\n";
-    });
+      let rows = [];
 
-    // Create a downloadable link
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "filtered_orders.csv");
-    document.body.appendChild(link);
-    link.click();
+      if (productsMap.length === 0) {
+        const productIds = [];
+        const studentProductIds = {};
+        filteredOrders.forEach(order => {
+          order.items.forEach(item => {
+            if (item.bundle && item.bundle.bundleProducts) {
+              item.bundle.bundleProducts.forEach(product => {
+                if (product.optional === false) {
+                  if (product.productId && !productIds.includes(product.productId)) {
+                    productIds.push(product.productId);
+                  }
+                  if (item?.student?.id) {
+                    studentProductIds[item.student.id]?.length ? studentProductIds[item.student.id].push(product.productId) : studentProductIds[item.student.id] = [product.productId];
+                  }
+                }
+              });
+            }
+          });
+        });
+
+        // If no products, exit early
+        if (productIds.length === 0) {
+          toast.warning("No products found to export");
+          setLoading(false);
+          return;
+        }
+
+        // Fetch all products by IDs
+        const products = await getProductsByIds(productIds);
+        const sizes = await getSizesInBulk(studentProductIds);
+
+        let counter = 1;
+        filteredOrders.forEach(order => {
+          order.items.forEach(item => {
+            const student = item.student || {};
+
+            if (item.bundle && item.bundle.bundleProducts) {
+              item.bundle.bundleProducts.forEach(bundleProduct => {
+                if (bundleProduct.optional === false) {
+                  const product = products[bundleProduct.productId] || {};
+
+                  // Get the size from sizes data if available
+                  let size = '';
+                  if (sizes[student.id] && sizes[student.id][bundleProduct.productId]) {
+                    size = sizes[student.id][bundleProduct.productId];
+                  }
+
+                  rows.push([
+                    counter++,
+                    student.usid || '',
+                    student.studentName || '',
+                    student.gender || '',
+                    student.class || '',
+                    student.section || '',
+                    student.house || '',
+                    order.id || '',
+                    product.name || '',
+                    size || '',
+                    bundleProduct.quantity || ''
+                  ]);
+                }
+              });
+            }
+          });
+        });
+        setProductsMap(rows);
+      } else {
+        rows = productsMap;
+      }
+      let csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n";
+      rows.forEach(row => {
+        // Escape any commas within fields
+        const escapedRow = row.map(field => {
+          const str = String(field || '');
+          return str.includes(',') ? `"${str}"` : str;
+        });
+
+        csvContent += escapedRow.join(",") + "\n";
+      });
+
+      // Create a downloadable link
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "Order_Details.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("Error exporting data:", error);
+      toast.error("Failed to export data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  const printOrderSlip = async (order) => {
+    setLoading(true);
+    try {      
+      const student = order.items[0]?.student || {};
+      
+      const productIds = [];
+      const studentProductIds = {};
+      
+      if (student.id) {
+        studentProductIds[student.id] = [];
+      }
+      
+      order.items.forEach(item => {
+        if (item.bundle && item.bundle.bundleProducts) {
+          item.bundle.bundleProducts.forEach(product => {
+            if (product.productId && !productIds.includes(product.productId)) {
+              productIds.push(product.productId);
+              
+              if (student.id) {
+                studentProductIds[student.id].push(product.productId);
+              }
+            }
+          });
+        }
+      });
+      
+      // Fetch product and size data
+      const products = await getProductsByIds(productIds);
+      const sizes = student.id ? await getSizesInBulk(studentProductIds) : {};
+
+      // Create a temporary container for our HTML template
+      const tempDiv = document.createElement('div');
+      tempDiv.style.position = 'absolute';
+      tempDiv.style.left = '-9999px';
+      tempDiv.style.top = '-9999px';
+      tempDiv.style.width = '210mm'; // A4 width
+      document.body.appendChild(tempDiv);
+
+      // Build the product rows HTML
+      let productRowsHtml = '';
+      const productRows = [];
+      let rowCounter = 0;
+      
+      // Add actual product rows
+      order.items.forEach(item => {
+        if (item.bundle && item.bundle.bundleProducts) {
+          item.bundle.bundleProducts.forEach(product => {
+            const productObj = products[product.productId] || {};
+            const size = student.id && sizes[student.id] ? sizes[student.id][product.productId] || '' : '';
+            
+            productRows.push({
+              name: productObj.name || product.productName || '',
+              size: size,
+              quantity: product.quantity || '1'
+            });
+          });
+        }
+      });
+      
+      // Add empty rows if needed to reach total of 10 rows
+      while (productRows.length < 10) {
+        productRows.push({
+          name: `Product - ${productRows.length + 1}`,
+          size: '0',
+          quantity: '0'
+        });
+      }
+      
+      // Create rows HTML
+      productRows.forEach(product => {
+        productRowsHtml += `
+          <tr>
+            <td style="padding: 8px; border: 1px solid black; text-align: center;">${product.name}</td>
+            <td style="padding: 8px; border: 1px solid black; text-align: center;">${product.size}</td>
+            <td style="padding: 8px; border: 1px solid black; text-align: center;">${product.quantity}</td>
+          </tr>
+        `;
+      });
+      
+      // Set the full HTML template
+      tempDiv.innerHTML = `
+        <div style="padding: 20px; font-family: Arial, sans-serif; font-size: 18px;">
+          <table style="width: 100%; border-collapse: collapse; border: 1px solid black;">
+            <tr>
+              <td style="padding: 8px; border: 1px solid black; width: 50%; text-align: center;">
+                <strong>Student Name : ${student.studentName || ''}</strong>
+              </td>
+              <td style="padding: 8px; border: 1px solid black; width: 50%; text-align: center;">
+                <strong>Student Id : ${student.usid || ''}</strong>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; border: 1px solid black; text-align: center;">
+                <strong>Gender : ${student.gender || ''}</strong>
+              </td>
+              <td style="padding: 8px; border: 1px solid black; text-align: center;">
+                <strong>Grade & Sec : ${student.class || ''}${student.section ? '-' + student.section : ''}</strong>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; border: 1px solid black; text-align: center;">
+                <strong>House : ${student.house || ''}</strong>
+              </td>
+              <td style="padding: 8px; border: 1px solid black; text-align: center;">
+                <strong>Order Id. : ${order.id}</strong>
+              </td>
+            </tr>
+          </table>
+          
+          <table style="width: 100%; border-collapse: collapse; border: 1px solid black; margin-top: 5px;">
+            <tr style="background-color: yellow;">
+              <th style="padding: 8px; border: 1px solid black; width: 60%; text-align: center;">Product</th>
+              <th style="padding: 8px; border: 1px solid black; width: 20%; text-align: center;">Size</th>
+              <th style="padding: 8px; border: 1px solid black; width: 20%; text-align: center;">Quantity</th>
+            </tr>
+            ${productRowsHtml}
+          </table>
+        </div>
+      `;
+      
+      // Use html2canvas to convert our template to an image
+      const canvas = await html2canvas(tempDiv, {
+        scale: 2, // Higher scale for better quality
+        logging: false,
+        useCORS: true,
+        allowTaint: true
+      });
+      
+      // Create PDF with the image
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`Order_Slip_${order.id}.pdf`);
+      
+      // Clean up
+      document.body.removeChild(tempDiv);
+      
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast.error("Failed to generate order slip PDF");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return loading ? (
@@ -231,12 +460,19 @@ const OrderManagement = ({isVendor = false}) => {
                   <td>{order.totalPrice}</td>
                   <td className="text-capitalize">{isVendor ? order.status : order.transactionStatus}</td>
                   <td>{new Date(order.createdAt).toLocaleDateString()}</td>
-                  <td>
+                  <td className="d-flex justify-content-center">
                     <button
-                      className="btn btn-primary btn-sm"
+                      className="btn btn-primary btn-sm me-2"
                       onClick={() => onView(order)}
                     >
                       <em className="bi bi-eye" />
+                    </button>
+                    <button
+                      className="btn btn-info btn-sm text-white"
+                      onClick={() => printOrderSlip(order)}
+                      title="Print Order Slip"
+                    >
+                      <em className="bi bi-printer" />
                     </button>
                   </td>
                 </tr>
@@ -273,7 +509,10 @@ const OrderManagement = ({isVendor = false}) => {
       </div>
 
       {/* Order Details Modal */}
-      <Modal show={showModal} onHide={() => setShowModal(false)}>
+      <Modal show={showModal} onHide={() => {
+        setShowModal(false);
+        setBarcode("");
+      }}>
         <Modal.Header closeButton>
           <Modal.Title>Order Details</Modal.Title>
         </Modal.Header>
@@ -355,16 +594,16 @@ const OrderManagement = ({isVendor = false}) => {
                 <strong>Transaction Timestamp:</strong>{" "}
                 {selectedOrder.payments[0]?.raw?.transaction_timestamp
                   ? new Date(
-                      selectedOrder.payments[0]?.raw?.transaction_timestamp
-                    ).toLocaleString("en-IN", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                      hour: "numeric",
-                      minute: "2-digit",
-                      second: "2-digit",
-                      hour12: true,
-                    })
+                    selectedOrder.payments[0]?.raw?.transaction_timestamp
+                  ).toLocaleString("en-IN", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                    hour: "numeric",
+                    minute: "2-digit",
+                    second: "2-digit",
+                    hour12: true,
+                  })
                   : "--"}
               </p>
               {/* Status Update */}
@@ -373,6 +612,7 @@ const OrderManagement = ({isVendor = false}) => {
               <Form.Select
                 value={newStatus}
                 onChange={(e) => setNewStatus(e.target.value)}
+                className="mb-3"
               >
                 {isVendor ? (
                   <>
@@ -387,6 +627,41 @@ const OrderManagement = ({isVendor = false}) => {
                   </>
                 )}
               </Form.Select>
+
+              <div className="mt-3">
+                <h5>Scan Barcode</h5>
+                <div className="d-flex align-items-center mb-2">
+                  {isVendor ? (
+                    <>
+                      <input 
+                        type="text" 
+                        className="form-control me-2"
+                        placeholder="Scan barcode here" 
+                        value={barcode}
+                        onChange={(e) => setBarcode(e.target.value)}
+                        ref={barcodeInputRef}
+                      />
+                      <Button 
+                        variant="secondary" 
+                        onClick={() => {
+                          if (barcodeInputRef.current) {
+                            barcodeInputRef.current.focus();
+                          }
+                        }}
+                      >
+                        <i className="bi bi-upc-scan"></i> Scan
+                      </Button>
+                    </>
+                  ) : (
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={barcode}
+                      disabled
+                    />
+                  )}
+                </div>
+              </div>
             </div>
           )}
         </Modal.Body>

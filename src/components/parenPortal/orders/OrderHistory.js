@@ -85,6 +85,7 @@ const OrderHistory = () => {
             <th>Quantity</th>
             <th>Total Price</th>
             <th>Purchase Date</th>
+            <th>Tracking ID</th>
           </tr>
         </thead>
         <tbody>
@@ -98,6 +99,7 @@ const OrderHistory = () => {
                 <td>{order.items?.length}</td>
                 <td>{order.totalPrice}</td>
                 <td>{order.createdAt?.split("T")[0]}</td>
+                <td>{order.trackingId}</td>
               </tr>
             ))
           ) : (

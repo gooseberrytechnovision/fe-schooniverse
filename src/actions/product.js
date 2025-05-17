@@ -217,9 +217,9 @@ export const fetchOrdersParent = async (id) => {
   }
 };
 
-export const updateOrderStatus = async (id, status) => {
+export const updateOrderStatus = async (id, data) => {
   try {
-    const res = await patch(`/orders/${id}/status`, { status });
+    const res = await patch(`/orders/${id}/status`, data);
     return res.data;
   } catch (error) {
     toast.error(error.message, { position: "top-right" });
@@ -324,5 +324,25 @@ export const updateProductSize = async (sizeData) => {
   } catch (error) {
     toast.error(error.message, { position: "top-right" });
     return error;
+  }
+};
+
+export const getProductsByIds = async (productIds) => {
+  try {
+    const res = await post("/products/by-ids", { productIds });
+    return res.data;
+  } catch (error) {
+    toast.error(error.message, { position: "top-right" });
+    return {};
+  }
+};
+
+export const getSizesInBulk = async (studentProductIds) => {
+  try {
+    const res = await post("/sizes/bulk", studentProductIds);
+    return res.data;
+  } catch (error) {
+    toast.error(error.message, { position: "top-right" });
+    return {};
   }
 };
