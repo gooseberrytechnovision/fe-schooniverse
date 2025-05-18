@@ -5,7 +5,7 @@ export const ROLES = {
   ALL: "all",
 };
 
-export const API_BASE_URL = "http://localhost:3002";
+export const API_BASE_URL = "http://dev-env.eba-w6szmmmp.us-east-1.elasticbeanstalk.com";
   // "https://nestschoolbackend-production.up.railway.app";
 
 export const PAYMENT_MODE = {
