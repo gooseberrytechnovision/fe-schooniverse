@@ -144,7 +144,7 @@ export const paymentConfig = async (orderId) => {
 };
 
 export const paymentSuccess =
-  ({ order_id, bank_reference_id, transaction_timestamp, application_code }) =>
+  ({ order_id, bank_reference_id, transaction_timestamp, application_code, cartItems }) =>
   async (dispatch) => {
     try {
       const res = await post("/payment/success", {
@@ -152,6 +152,7 @@ export const paymentSuccess =
         bank_reference_id,
         transaction_timestamp,
         application_code,
+        cartItems,
       });
       dispatch({
         type: ORDER_PLACED_SUCCESSFULLY,
@@ -172,6 +173,7 @@ export const paymentError = async ({
   bank_reference_id,
   transaction_timestamp,
   application_code,
+  cartItems,
   error,
 }) => {
   try {
@@ -181,6 +183,7 @@ export const paymentError = async ({
       bank_reference_id,
       order_code: order_id,
       transaction_timestamp,
+      cartItems,
     });
     return res.data;
   } catch (error) {
@@ -188,9 +191,9 @@ export const paymentError = async ({
   }
 };
 
-export const paymentClosed = async ({ order_code, event }) => {
+export const paymentClosed = async ({ order_code, event, cartItems }) => {
   try {
-    const res = await post("/payment/closed", { order_code, event });
+    const res = await post("/payment/closed", { order_code, event, cartItems });
     return res.data;
   } catch (error) {
     return error;

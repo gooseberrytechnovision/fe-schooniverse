@@ -143,6 +143,10 @@ const CartPage = () => {
                         <strong>Type:</strong>{" "}
                         {item.bundle.studentType || "Existing"} Student
                       </p>
+                      <p className="small mb-2">
+                        <strong>House:</strong>{" "}
+                        {item.student?.house || "-"}
+                      </p>
                       <div className="d-flex align-items-center gap-2">
                         <button
                           className="btn btn-sm btn-outline-primary px-3"

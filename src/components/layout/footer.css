@@ -21,3 +21,10 @@
 .footer-link:hover {
   text-decoration: underline;
 }
+
+.footer-legal-links {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}

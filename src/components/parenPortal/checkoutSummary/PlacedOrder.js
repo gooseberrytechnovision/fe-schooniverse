@@ -74,9 +74,10 @@ const PlaceOrder = () => {
 
   useEffect(() => {
     const handleGqSuccess = (paymentResponse) => {
+      debugger
       const paymentData = paymentResponse.gqData.data;
       if (paymentData.event === "dt.payment.captured") {
-        dispatch(paymentSuccess({ order_id: orderId, ...paymentData }));
+        dispatch(paymentSuccess({ order_id: orderId, ...paymentData, cartItems: cartData.items }));
         setPaymentDone(true);
         localStorage.setItem("orderId", orderId);
       }
@@ -85,7 +86,7 @@ const PlaceOrder = () => {
     const handleGqError = (errorInfo) => {
       const paymentData = errorInfo.gqData.data;
       if (paymentData.event === "dt.payment.failed") {
-        paymentError({ order_id: orderId, ...paymentData });
+        paymentError({ order_id: orderId, ...paymentData, cartItems: cartData.items });
         setPaymentFailed(true);
       }
     };
@@ -108,6 +109,7 @@ const PlaceOrder = () => {
         paymentClosed({
           event: closeData.gqData.data.event,
           order_code: orderId,
+          cartItems: cartData.items,
         });
         toast.info("Payment cancelled by user.", { position: "top-right" });
       }
@@ -254,6 +256,10 @@ const PlaceOrder = () => {
                       <p className="small mb-1">
                         <strong>Gender:</strong>{" "}
                         {item.bundle.gender || "Unisex"}
+                      </p>
+                      <p className="small mb-1">
+                        <strong>House:</strong>{" "}
+                        {item.student?.house || "-"}
                       </p>
                       <p className="small mb-1">
                         <strong>Quantity:</strong> {item.quantity || 0}
