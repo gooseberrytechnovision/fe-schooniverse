@@ -89,11 +89,11 @@ const BundleManagement = () => {
       studentType: bundle.studentType,
       applicableClasses: bundle.applicableClasses,
       totalPrice: parseFloat(bundle.totalPrice),
-      products: bundle.bundleProducts.map(bp => ({
+      products: bundle.bundleProducts.length > 0 ? bundle.bundleProducts.map(bp => ({
         productId: bp.product.id.toString(),
         quantity: bp.quantity,
         optional: bp.optional
-      }))
+      })) : [{ productId: "", quantity: 1, optional: false }]
     };
     setEditBundle(bundleData);
     setShowBundleForm(true);
