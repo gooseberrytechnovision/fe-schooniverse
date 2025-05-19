@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import bannerImage from "../../../images/Gaudium washcare banner.png";
 import { updateProductSize } from "../../../actions/product";
-import { sizeOptions as productSizeOptions } from "../../../utils/constants";
+import { sizeOptions } from "../../../utils/constants";
 
 const QuickViewModal = ({ bundle, onClose, onAddToCart, showAction, user, onSizeUpdate }) => {
   const [quantity, setQuantity] = useState(1);
@@ -33,9 +33,9 @@ const QuickViewModal = ({ bundle, onClose, onAddToCart, showAction, user, onSize
     document.body.removeChild(link);
   };
 
-  const handleViewSizeChart = (productName) => {
-    const jpgUrl = productSizeOptions[productName].sizeChart;
-    const pngUrl = productSizeOptions[productName].sizeChart;
+  const handleViewSizeChart = (productName, sizeOptions) => {
+    const jpgUrl = sizeOptions[productName]?.sizeChart || "https://gaudium-size-charts.s3.us-east-1.amazonaws.com/TGS+Uni+Shirt+-+White.png";
+    const pngUrl = sizeOptions[productName]?.sizeChart || "https://gaudium-size-charts.s3.us-east-1.amazonaws.com/TGS+Uni+Shirt+-+White.png";
     // Try to determine which URL to use
     const img = new Image();
     img.onload = () => {
@@ -184,7 +184,7 @@ const QuickViewModal = ({ bundle, onClose, onAddToCart, showAction, user, onSize
                         <td>
                             <button onClick={(e) => {
                               e.preventDefault();
-                              handleViewSizeChart(item.product_name);
+                              handleViewSizeChart(item.product_name, sizeOptions);
                             }} className="text-primary">
                               View Size Chart
                             </button>
@@ -195,7 +195,7 @@ const QuickViewModal = ({ bundle, onClose, onAddToCart, showAction, user, onSize
                             item.size
                           ) : (
                             <div className="d-flex align-items-center">
-                              {/* {productSizeOptions[item.product_name] ? (
+                              {/* {sizeOptions[item.product_name] ? (
                                 <select
                                   className="form-select form-select-sm"
                                   value={pendingSizes[item.product_id] || productSizes[item.product_id] || ""}
@@ -203,7 +203,7 @@ const QuickViewModal = ({ bundle, onClose, onAddToCart, showAction, user, onSize
                                   disabled={loadingStates[item.product_id]}
                                 >
                                   <option value="">Select Size</option>
-                                  {productSizeOptions[item.product_name]?.map((size) => (
+                                  {sizeOptions[item.product_name]?.map((size) => (
                                     <option key={size} value={size}>
                                       {size}
                                     </option>
