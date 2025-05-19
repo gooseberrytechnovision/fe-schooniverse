@@ -97,7 +97,7 @@ const Navbar = () => {
         Welcome! Kindly place your order for The Gaudium School uniforms. We appreciate your continued support and association.
       </div>
 
-      <nav className="navbar z-[10] absolute top-0 w-full navbar-expand-lg position-sticky">
+      <nav className="navbar position-fixed top-0 w-full navbar-expand-lg" style={{ zIndex: 99 }}>
         <div className="container-fluid">
           <Link
             className="navbar-brand d-flex align-items-center text-white ms-5"

@@ -34,8 +34,8 @@ const QuickViewModal = ({ bundle, onClose, onAddToCart, showAction, user, onSize
   };
 
   const handleViewSizeChart = (productName) => {
-    const jpgUrl = `/images/size-charts/${productName}.jpg`;
-    const pngUrl = `/images/size-charts/${productName}.png`;
+    const jpgUrl = productSizeOptions[productName].sizeChart;
+    const pngUrl = productSizeOptions[productName].sizeChart;
     // Try to determine which URL to use
     const img = new Image();
     img.onload = () => {
@@ -195,7 +195,7 @@ const QuickViewModal = ({ bundle, onClose, onAddToCart, showAction, user, onSize
                             item.size
                           ) : (
                             <div className="d-flex align-items-center">
-                              {productSizeOptions[item.product_name] ? (
+                              {/* {productSizeOptions[item.product_name] ? (
                                 <select
                                   className="form-select form-select-sm"
                                   value={pendingSizes[item.product_id] || productSizes[item.product_id] || ""}
@@ -209,7 +209,7 @@ const QuickViewModal = ({ bundle, onClose, onAddToCart, showAction, user, onSize
                                     </option>
                                   ))}
                                 </select>
-                              ) : (
+                              ) : ( */}
                                 <input
                                   type="text"
                                   className="form-control form-control-sm"
@@ -218,7 +218,7 @@ const QuickViewModal = ({ bundle, onClose, onAddToCart, showAction, user, onSize
                                   onChange={(e) => handleSizeSelect(item.product_id, e.target.value)}
                                   disabled={loadingStates[item.product_id]}
                                 />
-                              )}
+                              {/* )} */}
                               {pendingSizes[item.product_id] && (
                                 <button 
                                   className="btn btn-sm btn-primary ms-2"

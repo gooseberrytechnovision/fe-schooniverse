@@ -93,18 +93,60 @@ export const SUPORT_ATTACHMENT_URL =
 export const SHIPPING_CHARGES = 500;
 
 export const sizeOptions = {
-  "TGS PP Uni CC Tee - White": ["P3", "P4", "P5", "P6", "P8", "P10", "P12", "P14"],
-  "RAP PP Boys w/o Zip Shorts - Printed": ["16", "18", "20", "22", "24", "26", "28", "30"],
-  "RAP PP Girls String Skirt - Printed": ["16", "18", "20", "22", "24", "26", "28", "30"],
-  "TGS Uni Shirt - White": ["3", "4", "5", "6", "8", "10", "12", "14", "16", "18", "20", "22", "24", "26", "28"],
-  "RAP Boys YP KE Shorts - Black Twill": ["18", "18L", "20", "20L", "22", "22L", "24", "24L", "26", "26L", "28", "30", "32", "34", "36"],
-  "RAP Boys YP EW Trouser - Black": ["20", "22", "24", "26", "26L", "28", "28L", "30", "30L", "32", "34", "36", "38", "40", "42", "44"],
-  "RAP Girls Yel Fan IE Skirt - Black Twill": ["2", "2L", "3S", "3", "3L", "4S", "4", "4L", "4XL", "5S", "5", "5L", "6S", "6", "6L", "6XL", "7S", "7", "7L", "7XL","8S", "8", "8L", "8XL", "9S", "9", "9L", "9XL", "10", "10L", "11", "11L", "12", "12L", "14", "14L"],
-  "RAP Girls YP SE Trouser - Black Twill": ["24", "26", "26L", "28", "28L", "30", "30L", "32", "34", "36", "38", "40", "42", "44"],
-  "TGS Uni V Collar Slate Tee": ["5", "6", "8", "10", "12", "14", "16", "18", "20", "22", "24"],
-  "RAP Uni SD Slate TP Shorts - Black Dia": ["3XS", "2XS", "XS", "S", "M", "L", "XL", "2XL"],
-  "RAP Uni SD Slate TP Track - Black Dia": ["19", "19L", "22", "22L", "25S", "25", "25L", "28S", "28", "28L", "31S", "31", "31L", "34S", "34", "34L", "37S", "37", "37L", "40", "43"],
-  "TGS Uni FS Puff Hoody - Yellow": ["3", "4", "5", "6", "8", "10", "12", "14", "16", "18", "20", "22", "24"],
-  "TGS PP Uni Star Raglan Hoody - Black": ["P3", "P4", "P5", "P6", "P8", "P10", "P12"],
-  "TGS Uni Printed Zip Hoody - Black": ["3", "4", "5", "6", "8", "10", "12", "14", "16", "18", "20", "22", "24", "26"],
+  "TGS PP Uni CC Tee - White": {
+    size: ["P3", "P4", "P5", "P6", "P8", "P10", "P12", "P14"],
+    sizeChart: "https://gaudium-size-charts.s3.us-east-1.amazonaws.com/TGS+Uni+Shirt+-+White.png"
+  },
+  "RAP PP Boys w/o Zip Shorts - Printed": {
+    size: ["16", "18", "20", "22", "24", "26", "28", "30"],
+    sizeChart: "https://gaudium-size-charts.s3.us-east-1.amazonaws.com/RAP+PP+Boys+w%3Ao+Zip+Shorts+-+Printed.png"
+  },
+  "RAP PP Girls String Skirt - Printed": {
+    size: ["16", "18", "20", "22", "24", "26", "28", "30"],
+    sizeChart: "https://gaudium-size-charts.s3.us-east-1.amazonaws.com/RAP+PP+Girls+String+Skirt+-+Printed.png"
+  },
+  "TGS Uni Shirt - White": {
+    size: ["3", "4", "5", "6", "8", "10", "12", "14", "16", "18", "20", "22", "24", "26", "28"],
+    sizeChart: "https://gaudium-size-charts.s3.us-east-1.amazonaws.com/TGS+Uni+Shirt+-+White.png"
+  },
+  "RAP Boys YP KE Shorts - Black Twill": {
+    size: ["18", "18L", "20", "20L", "22", "22L", "24", "24L", "26", "26L", "28", "30", "32", "34", "36"],
+    sizeChart: "https://gaudium-size-charts.s3.us-east-1.amazonaws.com/RAP+Boys+YP+KE+Shorts+-+Black+Twill.png"
+  },
+  "RAP Boys YP EW Trouser - Black": {
+    size: ["20", "22", "24", "26", "26L", "28", "28L", "30", "30L", "32", "34", "36", "38", "40", "42", "44"],
+    sizeChart: "https://gaudium-size-charts.s3.us-east-1.amazonaws.com/RAP+Boys+YP+EW+Trouser+-+Black.png"
+  },
+  "RAP Girls Yel Fan IE Skirt - Black Twill": {
+    size: ["2", "2L", "3S", "3", "3L", "4S", "4", "4L", "4XL", "5S", "5", "5L", "6S", "6", "6L", "6XL", "7S", "7", "7L", "7XL", "8S", "8", "8L", "8XL", "9S", "9", "9L", "9XL", "10", "10L", "11", "11L", "12", "12L", "14", "14L"],
+    sizeChart: "https://gaudium-size-charts.s3.us-east-1.amazonaws.com/RAP+Boys+YP+EW+Trouser+-+Black.png"
+  },
+  "RAP Girls YP SE Trouser - Black Twill": {
+    size: ["24", "26", "26L", "28", "28L", "30", "30L", "32", "34", "36", "38", "40", "42", "44"],
+    sizeChart: "https://gaudium-size-charts.s3.us-east-1.amazonaws.com/RAP+Boys+YP+EW+Trouser+-+Black.png"
+  },
+  "TGS Uni V Collar Slate Tee": {
+    size: ["5", "6", "8", "10", "12", "14", "16", "18", "20", "22", "24"],
+    sizeChart: "https://gaudium-size-charts.s3.us-east-1.amazonaws.com/RAP+Boys+YP+EW+Trouser+-+Black.png"
+  },
+  "RAP Uni SD Slate TP Shorts - Black Dia": {
+    size: ["3XS", "2XS", "XS", "S", "M", "L", "XL", "2XL"],
+    sizeChart: "https://gaudium-size-charts.s3.us-east-1.amazonaws.com/RAP+Boys+YP+EW+Trouser+-+Black.png"
+  },
+  "RAP Uni SD Slate TP Track - Black Dia": {
+    size: ["19", "19L", "22", "22L", "25S", "25", "25L", "28S", "28", "28L", "31S", "31", "31L", "34S", "34", "34L", "37S", "37", "37L", "40", "43"],
+    sizeChart: "https://gaudium-size-charts.s3.us-east-1.amazonaws.com/RAP+Boys+YP+EW+Trouser+-+Black.png"
+  },
+  "TGS Uni FS Puff Hoody - Yellow": {
+    size: ["3", "4", "5", "6", "8", "10", "12", "14", "16", "18", "20", "22", "24"],
+    sizeChart: "https://gaudium-size-charts.s3.us-east-1.amazonaws.com/RAP+Boys+YP+EW+Trouser+-+Black.png"
+  },
+  "TGS PP Uni Star Raglan Hoody - Black": {
+    size: ["P3", "P4", "P5", "P6", "P8", "P10", "P12"],
+    sizeChart: "https://gaudium-size-charts.s3.us-east-1.amazonaws.com/RAP+Boys+YP+EW+Trouser+-+Black.png"
+  },
+  "TGS Uni Printed Zip Hoody - Black": {
+    size: ["3", "4", "5", "6", "8", "10", "12", "14", "16", "18", "20", "22", "24", "26"],
+    sizeChart: "https://gaudium-size-charts.s3.us-east-1.amazonaws.com/RAP+Boys+YP+EW+Trouser+-+Black.png"
+  },
 }

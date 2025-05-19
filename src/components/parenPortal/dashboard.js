@@ -5,8 +5,7 @@ import ProductCarousel from "./ProductCarousel";
 const Dashboard = () => {
 
   return (
-    <div className="min-vh-100 d-flex flex-column">
-      {/* Banner */}
+    <div className="d-flex flex-column" style={{ minHeight: "50vh" }}>
       {/* Dashboard Content */}
       <div className="container">
         <div>

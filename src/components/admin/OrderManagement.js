@@ -331,7 +331,7 @@ const OrderManagement = ({ isVendor = false }) => {
                 <strong>House : ${student.house || ''}</strong>
               </td>
               <td style="padding: 8px; border: 1px solid black; text-align: center;">
-                <strong>Order Id. : ${order.id}</strong>
+                <strong>Order Id : ${order.id}</strong>
               </td>
             </tr>
           </table>

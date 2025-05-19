@@ -74,8 +74,7 @@ const PlaceOrder = () => {
 
   useEffect(() => {
     const handleGqSuccess = (paymentResponse) => {
-      debugger
-      const paymentData = paymentResponse.gqData.data;
+      const paymentData = paymentResponse?.gqData?.data;
       if (paymentData.event === "dt.payment.captured") {
         dispatch(paymentSuccess({ order_id: orderId, ...paymentData, cartItems: cartData.items }));
         setPaymentDone(true);
@@ -84,10 +83,14 @@ const PlaceOrder = () => {
     };
 
     const handleGqError = (errorInfo) => {
-      const paymentData = errorInfo.gqData.data;
-      if (paymentData.event === "dt.payment.failed") {
+      const paymentData = errorInfo?.gqData?.data;
+      if (paymentData?.event === "dt.payment.failed") {
         paymentError({ order_id: orderId, ...paymentData, cartItems: cartData.items });
         setPaymentFailed(true);
+      } else {
+        toast.error("Payment failed. Please try again.", {
+          position: "top-right",
+        });
       }
     };
 
