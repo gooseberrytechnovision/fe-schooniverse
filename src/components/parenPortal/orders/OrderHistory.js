@@ -99,7 +99,9 @@ const OrderHistory = () => {
                 <td>{order.items?.length}</td>
                 <td>{order.totalPrice}</td>
                 <td>{order.createdAt?.split("T")[0]}</td>
-                <td>{order.trackingId}</td>
+                <td>
+                  <a href={`https://www.dtdc.in/trace.asp`}>{order.trackingId}</a>
+                </td>
               </tr>
             ))
           ) : (

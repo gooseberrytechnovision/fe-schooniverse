@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import bannerImage from "../../../images/Gaudium washcare banner.png";
 import { updateProductSize } from "../../../actions/product";
-import { sizeOptions } from "../../../utils/constants";
 
 const QuickViewModal = ({ bundle, onClose, onAddToCart, showAction, user, onSizeUpdate }) => {
   const [quantity, setQuantity] = useState(1);
@@ -33,51 +32,48 @@ const QuickViewModal = ({ bundle, onClose, onAddToCart, showAction, user, onSize
     document.body.removeChild(link);
   };
 
-  const handleViewSizeChart = (productName, sizeOptions) => {
-    const jpgUrl = sizeOptions[productName]?.sizeChart || "https://gaudium-size-charts.s3.us-east-1.amazonaws.com/TGS+Uni+Shirt+-+White.png";
-    const pngUrl = sizeOptions[productName]?.sizeChart || "https://gaudium-size-charts.s3.us-east-1.amazonaws.com/TGS+Uni+Shirt+-+White.png";
-    // Try to determine which URL to use
+  const handleViewSizeChart = (sizeChart) => {
     const img = new Image();
     img.onload = () => {
-      window.open(jpgUrl, '_blank');
+      window.open(sizeChart, '_blank');
     };
     img.onerror = () => {
       // If JPG fails, try PNG
       const pngImg = new Image();
       pngImg.onload = () => {
-        window.open(pngUrl, '_blank');
+        window.open(sizeChart, '_blank');
       };
       pngImg.onerror = () => {
         toast.error("Size chart not found", { position: "top-right" });
       };
-      pngImg.src = pngUrl;
+      pngImg.src = sizeChart;
     };
-    img.src = jpgUrl;
+    img.src = sizeChart;
   };
 
   const handleSizeSelect = (productId, size) => {
     setPendingSizes(prev => ({ ...prev, [productId]: size }));
   };
-  
+
   const handleSaveSizeClick = async (productId) => {
     const size = pendingSizes[productId];
     if (!size) return;
-    
+
     // Set loading state for this product
     setLoadingStates(prev => ({ ...prev, [productId]: true }));
-    
+
     try {
       // Update local state
       setProductSizes(prev => ({ ...prev, [productId]: size }));
-      
+
       const sizeData = {
         size,
         studentId: bundle.student.id,
         productId
       };
-      
+
       await updateProductSize(sizeData);
-      
+
       // Update the bundle object with the new size
       if (onSizeUpdate) {
         const updatedBundle = {
@@ -91,14 +87,14 @@ const QuickViewModal = ({ bundle, onClose, onAddToCart, showAction, user, onSize
         };
         onSizeUpdate(updatedBundle);
       }
-      
+
       // Clear pending size after successful save
       setPendingSizes(prev => {
-        const newState = {...prev};
+        const newState = { ...prev };
         delete newState[productId];
         return newState;
       });
-      
+
       toast.success("Size updated successfully", { position: "top-right" });
     } catch (error) {
       setProductSizes(prev => ({ ...prev, [productId]: '' }));
@@ -182,12 +178,12 @@ const QuickViewModal = ({ bundle, onClose, onAddToCart, showAction, user, onSize
                       <tr key={index}>
                         <td>{item.product_name}</td>
                         <td>
-                            <button onClick={(e) => {
-                              e.preventDefault();
-                              handleViewSizeChart(item.product_name, sizeOptions);
-                            }} className="text-primary">
-                              View Size Chart
-                            </button>
+                          {item.size_chart && <button onClick={(e) => {
+                            e.preventDefault();
+                            handleViewSizeChart(item.size_chart);
+                          }} className="text-primary">
+                            View Size Chart
+                          </button>}
                         </td>
                         <td>{item.quantity}</td>
                         <td>
@@ -195,32 +191,17 @@ const QuickViewModal = ({ bundle, onClose, onAddToCart, showAction, user, onSize
                             item.size
                           ) : (
                             <div className="d-flex align-items-center">
-                              {/* {sizeOptions[item.product_name] ? (
-                                <select
-                                  className="form-select form-select-sm"
-                                  value={pendingSizes[item.product_id] || productSizes[item.product_id] || ""}
-                                  onChange={(e) => handleSizeSelect(item.product_id, e.target.value)}
-                                  disabled={loadingStates[item.product_id]}
-                                >
-                                  <option value="">Select Size</option>
-                                  {sizeOptions[item.product_name]?.map((size) => (
-                                    <option key={size} value={size}>
-                                      {size}
-                                    </option>
-                                  ))}
-                                </select>
-                              ) : ( */}
-                                <input
-                                  type="text"
-                                  className="form-control form-control-sm"
-                                  placeholder="Enter size"
-                                  value={pendingSizes[item.product_id] || productSizes[item.product_id] || ""}
-                                  onChange={(e) => handleSizeSelect(item.product_id, e.target.value)}
-                                  disabled={loadingStates[item.product_id]}
-                                />
+                              <input
+                                type="text"
+                                className="form-control form-control-sm"
+                                placeholder="Enter size"
+                                value={pendingSizes[item.product_id] || productSizes[item.product_id] || ""}
+                                onChange={(e) => handleSizeSelect(item.product_id, e.target.value)}
+                                disabled={loadingStates[item.product_id]}
+                              />
                               {/* )} */}
                               {pendingSizes[item.product_id] && (
-                                <button 
+                                <button
                                   className="btn btn-sm btn-primary ms-2"
                                   onClick={() => handleSaveSizeClick(item.product_id)}
                                   disabled={loadingStates[item.product_id]}
@@ -240,9 +221,9 @@ const QuickViewModal = ({ bundle, onClose, onAddToCart, showAction, user, onSize
                 </tbody>
               </table>
             </div>
-            
+
             <div className="mt-3 text-center">
-              <button 
+              <button
                 className="btn btn-outline-primary btn-sm"
                 onClick={handleDownloadImage}
               >

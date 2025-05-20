@@ -60,7 +60,7 @@ const FAQs = () => {
     },
     {
       question: "The amount has been debited but I have not received any order confirmation by email or SMS. What is to be done?",
-      answer: "Please contact support email ID to be placed here after 24 hours, if the payment has not been returned to your account. Kindly note that queries will be addressed in 3 working days."
+      answer: "Please contact support@thathvauniforms.com, if the payment has not been returned to your account. Kindly note that queries will be addressed in 3 working days."
     }
   ]; 
   
