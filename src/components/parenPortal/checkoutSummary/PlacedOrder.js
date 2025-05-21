@@ -319,7 +319,21 @@ const PlaceOrder = () => {
                     Pick Up from School (No Charges)
                   </label>
                 </div>
-
+                <div className="form-check mt-2">
+                  <input
+                    className="form-check-input"
+                    type="radio"
+                    name="shippingMethod"
+                    id="homeDelivery"
+                    value="home"
+                    checked={shippingMethod === "home"}
+                    onChange={(e) => setShippingMethod(e.target.value)}
+                  />
+                  <label className="form-check-label" htmlFor="homeDelivery">
+                    Home Delivery (₹{SHIPPING_CHARGES})
+                  </label>
+                </div>
+                
                 {/* Show address if "Delivered at Home" is selected */}
                 {shippingMethod === "home" &&
                   cartData.items[0]?.student?.address && (
