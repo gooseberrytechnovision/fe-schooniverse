@@ -35,6 +35,13 @@ import SupportQueries from "./components/admin/SupportQueries";
 import AdminLogin from "./components/auth/AdminLogin";
 import AdminManagement from "./components/admin/AdminManagement";
 
+// Import new pages
+import AboutUs from "./pages/about";
+import ContactUs from "./pages/contact";
+import TermsAndConditions from "./pages/terms";
+import PrivacyPolicy from "./pages/privacy";
+import RefundPolicy from "./pages/refund-policy";
+
 import { ToastContainer } from "react-toastify";
 const ProductListing = lazy(() =>
   import("./components/parenPortal/products/productList")
@@ -67,8 +74,6 @@ const App = () => {
       <ToastContainer />
       <Router>
         <Suspense fallback={<FullPageSpinner loading={true} />} />
-        {/* <Fragment> */}
-        {/* <Navbar /> */}
         <Layout>
           <Routes>
             <Route path="/" element={<AuthRedirect />} />
@@ -82,10 +87,16 @@ const App = () => {
               element={<AdminLogin userType={"Vendor"} />}
             />
 
+            {/* Public Routes */}
+            <Route path="/about" element={<AboutUs />} />
+            <Route path="/contact" element={<ContactUs />} />
+            <Route path="/terms" element={<TermsAndConditions />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/refund-policy" element={<RefundPolicy />} />
+
             {/* Private Routes for Authenticated Users */}
             <Route element={<PrivateRoute />}>
               <Route path="/dashboard" element={<Dashboard />} />
-              {/* <Route path="/profile" element={<ProfilePage />} /> */}
             </Route>
 
             <Route element={<PrivateRoute allowedRoles={[ROLES.PARENT]} />}>
@@ -94,27 +105,21 @@ const App = () => {
               <Route path="/order/history" element={<OrderHistory />} />
               <Route path="/thankyou/:orderId" element={<ThankYouPage />} />
               <Route path="/faqs" element={<FAQs />} />
-
               <Route path="/cart" element={<CheckoutSummary />} />
-              {/* <Route path="/payment" element={<CheckoutSummary />} /> */}
               <Route path="/checkout" element={<CheckoutSummary />} />
             </Route>
 
             <Route element={<PrivateRoute allowedRoles={[ROLES.ADMIN]} />}>
-              {/* <Route path="/admin/manage" element={<AdminManagement />} /> */}
               <Route path="/admin/products" element={<ProductManagement />} />
               <Route path="/admin/students" element={<StudentManagement />} />
               <Route path="/admin/orders" element={<OrderManagement />} />
               <Route path="/admin/bundle" element={<BundleManagement />} />
-              {/* <Route path="/admin/support" element={<SupportQueries />} /> */}
             </Route>
+
             <Route element={<PrivateRoute allowedRoles={[ROLES.VENDOR]} />}>
-              {/* <Route
-                path="/vendor/manage"
-                element={<AdminManagement vendor={true} />}
-              /> */}
               <Route path="/vendor/orders" element={<OrderManagement isVendor={true} />} />
             </Route>
+
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </Layout>
