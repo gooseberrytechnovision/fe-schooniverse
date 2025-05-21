@@ -56,7 +56,7 @@ const FAQs = () => {
     },
     {
       question: "What payment methods do you accept?",
-      answer: "Payment is to be made via the uniform ordering portal only (Link to be placed here)."
+      answer: "Payment is to be made via the uniform ordering portal only."
     },
     {
       question: "The amount has been debited but I have not received any order confirmation by email or SMS. What is to be done?",
