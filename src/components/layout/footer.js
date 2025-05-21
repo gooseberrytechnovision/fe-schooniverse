@@ -7,12 +7,11 @@ const Footer = () => {
       <div className="footer-container d-flex align-items-center justify-content-between flex-column flex-md-row p-3">
         <div className="footer-text">@ 2025 All rights reserved.</div>
         <div className="footer-legal-links my-4">
-          <a href="/terms" className="footer-link">Terms of Service</a>
-          <a href="/privacy" className="footer-link">Privacy Policy</a>
-          <a href="/cookie-policy" className="footer-link">Cookie Policy</a>
           <a href="/about" className="footer-link">About Us</a>
-          <a href="/contact" className="footer-link">Contact</a>
-          <a href="/faq" className="footer-link">FAQ</a>
+          <a href="/contact" className="footer-link">Contact Us</a>
+          <a href="/terms" className="footer-link">Terms & Conditions</a>
+          <a href="/privacy" className="footer-link">Privacy Policy</a>
+          <a href="/refund-policy" className="footer-link">Refund and Cancellation Policy</a>
         </div>
         <div className="footer-links">
         <svg

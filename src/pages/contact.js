@@ -1,6 +1,6 @@
 import React from 'react';
 import { Container, Typography, Box, Grid, Paper } from '@mui/material';
-import { Email, LocationOn } from '@mui/icons-material';
+import { Email, LocationOn, Phone } from '@mui/icons-material';
 
 const ContactUs = () => {
   return (
@@ -31,6 +31,12 @@ const ContactUs = () => {
                 <Email sx={{ mr: 2, color: 'primary.main' }} />
                 <Typography variant="body1">
                   support@thathvauniforms.com
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <Phone sx={{ mr: 2, color: 'primary.main' }} />
+                <Typography variant="body1">
+                  +91 90100 38559
                 </Typography>
               </Box>
             </Box>
