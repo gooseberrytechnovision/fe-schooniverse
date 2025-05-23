@@ -12,7 +12,7 @@ const FAQs = () => {
     },
     {
       question: "What is the last date to place an order?",
-      answer: "The uniform order must be placed by 24th May 2025 to ensure timely delivery and your child attends school in proper uniform as per the school dress code policy."
+      answer: "The uniform order must be placed by 27th May 2025 to ensure timely delivery and your child attends school in proper uniform as per the school dress code policy."
     },
     {
       question: "Can I choose the items?",
