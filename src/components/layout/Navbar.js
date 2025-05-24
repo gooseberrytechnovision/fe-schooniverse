@@ -720,7 +720,7 @@ const Navbar = () => {
 
       <div className="order-deadline-marquee">
         <marquee behavior="scroll" direction="left" scrollamount="5">
-          <strong>IMPORTANT:</strong> The uniform order must be placed by 27th May 2025 to ensure timely delivery and your child attends school in proper uniform.
+          <strong>IMPORTANT:</strong> The uniform order must be placed by 30th May 2025 to ensure timely delivery and your child attends school in proper uniform.
         </marquee>
       </div>
     </div>
