@@ -27,10 +27,7 @@ const ProductListing = () => {
     try {
       const bundleResponses = await Promise.all(
         user.students.map((id, index) => {
-          let type =
-            user?.studentData[index].boardingStatus === "Yes"
-              ? "Hostel"
-              : user?.studentData[index]?.studentType;
+          let type = user?.studentData[index]?.studentType;
           return fetchLinkedBundles(id, type);
         })
       );
