@@ -286,15 +286,6 @@ const OrderManagement = ({ isVendor = false }) => {
         }
       });
       
-      // Add empty rows if needed to reach total of 10 rows
-      while (productRows.length < 10) {
-        productRows.push({
-          name: `Product - ${productRows.length + 1}`,
-          size: '0',
-          quantity: '0'
-        });
-      }
-      
       // Create rows HTML
       productRows.forEach(product => {
         productRowsHtml += `

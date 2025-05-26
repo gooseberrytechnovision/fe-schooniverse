@@ -349,3 +349,13 @@ export const getSizesInBulk = async (studentProductIds) => {
     return {};
   }
 };
+
+export const getPaymentByOrderId = async (orderId) => {
+  try {
+    const res = await get(`/payment/${orderId}`);
+    return res.data;
+  } catch (error) {
+    toast.error(error.message, { position: "top-right" });
+    return null;
+  }
+};

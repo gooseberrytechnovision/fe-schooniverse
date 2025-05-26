@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { fetchOrdersParent } from "../../../actions/product";
 import { useSelector } from "react-redux";
 import FullPageSpinner from "../../layout/FullPageSpinner";
+import { downloadPaymentReceipt } from "../../../utils/pdfGenerator";
+import { toast } from "react-toastify";
 
 const OrderHistory = () => {
   const { user } = useSelector((state) => state.auth);
@@ -9,6 +11,7 @@ const OrderHistory = () => {
   const [orders, setOrders] = useState([]);
   const [sortOrder, setSortOrder] = useState("Latest");
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [downloadingIds, setDownloadingIds] = useState(new Set());
 
   useEffect(() => {
     const getLinkedOrders = async () => {
@@ -43,6 +46,23 @@ const OrderHistory = () => {
             new Date(b.date.split("-").reverse().join("-"));
     });
     setOrders(sortedOrders);
+  };
+
+  const handleDownloadReceipt = async (orderId) => {
+    try {
+      setDownloadingIds(prev => new Set([...prev, orderId]));
+      await downloadPaymentReceipt(orderId);
+      toast.success("Receipt downloaded successfully!", { position: "top-right" });
+    } catch (error) {
+      toast.error("Failed to download receipt. Please try again.", { position: "top-right" });
+      console.error("Download error:", error);
+    } finally {
+      setDownloadingIds(prev => {
+        const newSet = new Set([...prev]);
+        newSet.delete(orderId);
+        return newSet;
+      });
+    }
   };
 
   const getBundleNames = (order) => {
@@ -86,6 +106,7 @@ const OrderHistory = () => {
             <th>Total Price</th>
             <th>Purchase Date</th>
             <th>Tracking ID</th>
+            <th>Payment Receipt</th>
           </tr>
         </thead>
         <tbody>
@@ -102,11 +123,34 @@ const OrderHistory = () => {
                 <td>
                   <a href={`https://www.dtdc.in/trace.asp`}>{order.trackingId}</a>
                 </td>
+                <td>
+                  {order.transactionStatus === "PAID" ? (
+                    <button
+                      onClick={() => handleDownloadReceipt(order.id)}
+                      disabled={downloadingIds.has(order.id)}
+                      className="btn btn-primary btn-sm"
+                    >
+                      {downloadingIds.has(order.id) ? (
+                        <>
+                          <i className="bi bi-download me-1"></i>
+                          Downloading...
+                        </>
+                      ) : (
+                        <>
+                          <i className="bi bi-download me-1"></i>
+                          Download
+                        </>
+                      )}
+                    </button>
+                  ) : (
+                    <span className="text-muted">-</span>
+                  )}
+                </td>
               </tr>
             ))
           ) : (
             <tr>
-              <td colSpan="6" className="text-center text-muted fw-bold">
+              <td colSpan="9" className="text-center text-muted fw-bold">
                 No orders found
               </td>
             </tr>
