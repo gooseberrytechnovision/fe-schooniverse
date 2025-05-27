@@ -78,7 +78,7 @@ const ParentLogin = () => {
                 ) : (
                   <>
                     <div className="mb-4">
-                      <div className="fw-medium pb-2">Enter User ID</div>
+                      <div className="fw-medium pb-2">Enter USID</div>
                       <div className="input-icon-wrapper">
                         <UserRound className="input-icon" size={20} />
                         <input
@@ -86,7 +86,7 @@ const ParentLogin = () => {
                           value={userId}
                           onChange={(e) => setUserId(e.target.value)}
                           className="form-control input-with-icon"
-                          placeholder="Enter User ID"
+                          placeholder="Enter USID"
                           ref={inputRef}
                           required
                         />
