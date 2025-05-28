@@ -11,6 +11,7 @@ import {
   PRODUCT_ADDED_CART,
   PRODUCT_CART_ADD_FAILED,
 } from "./types";
+import axios from "axios";
 
 export const fetchLinkedBundles = async (usid, type) => {
   try {
@@ -357,5 +358,32 @@ export const getPaymentByOrderId = async (orderId) => {
   } catch (error) {
     toast.error(error.message, { position: "top-right" });
     return null;
+  }
+};
+
+export const verifyGqPaymentStatus = async (applicationCode) => {
+  try {
+    const apiKey = "cf24af42-2508-4633-b2a5-febd10795aa7";
+    const authToken = "Basic R1EtMjEyNDNjNzUtYmU1Mi00ZDAyLWFiNTItZGJmMDEzNmY2ZDgyOjRlOTI4MzVjLTVkMzQtNGYzOC05MTExLWVhNjhhZGNhNTcwYQ==";
+    
+    const headers = {
+      "GQ-API-Key": apiKey,
+      "Authorization": authToken,
+      "Content-Type": "application/json"
+    };
+    
+    // Using axios directly for custom headers
+    const response = await axios.get(
+      `https://erp-api.grayquest.com/v1/payments/fetch?application_code=${applicationCode}`,
+      { headers }
+    );
+    
+    if (response.data && response.data.success) {
+      return response.data.data;
+    } else {
+      return null;
+    }
+  } catch (error) {
+    console.error("Payment verification error:", error);
   }
 };

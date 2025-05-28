@@ -17,6 +17,7 @@ import { updateStudentDetail } from "../../../actions/student";
 import FullPageSpinner from "../../layout/FullPageSpinner";
 import { SHIPPING_CHARGES } from "../../../utils/constants";
 import { UPDATE_CART_ITEMS } from "../../../actions/types";
+import { verifyGqPaymentStatus } from "../../../actions/product";
 
 const PlaceOrder = () => {
   const navigate = useNavigate();
@@ -82,7 +83,7 @@ const PlaceOrder = () => {
       }
     };
 
-    const handleGqError = (errorInfo) => {
+    const handleGqError = async (errorInfo) => {
       const paymentData = errorInfo?.gqData?.data;
       if (paymentData?.event === "dt.payment.failed") {
         paymentError({ order_id: orderId, ...paymentData, cartItems: cartData.items });
@@ -92,9 +93,17 @@ const PlaceOrder = () => {
           position: "top-right",
         });
       }
+      if(paymentData.application_code) {
+        const verifiedPayment = await verifyGqPaymentStatus(paymentData.application_code);
+        if (verifiedPayment && verifiedPayment.payment_status === "PAID") {
+          dispatch(paymentSuccess({ order_id: orderId, ...verifiedPayment, cartItems: cartData.items }));
+          setPaymentDone(true);
+          localStorage.setItem("orderId", orderId);
+        }
+      }
     };
 
-    const handleGqPopUpClose = (closeData) => {
+    const handleGqPopUpClose = async (closeData) => {
       if (paymentDone) {
         toast.success("Order placed successfully!", {
           position: "top-right",
@@ -115,6 +124,15 @@ const PlaceOrder = () => {
           cartItems: cartData.items,
         });
         toast.info("Payment cancelled by user.", { position: "top-right" });
+      }
+
+      if(closeData.gqData.data.event.application_code) {
+        const verifiedPayment = await verifyGqPaymentStatus(closeData.gqData.data.event.application_code);
+        if (verifiedPayment && verifiedPayment.payment_status === "PAID") {
+          dispatch(paymentSuccess({ order_id: orderId, ...verifiedPayment, cartItems: cartData.items }));
+          setPaymentDone(true);
+          localStorage.setItem("orderId", orderId);
+        }
       }
     };
 
