@@ -5,7 +5,7 @@ export const ROLES = {
   ALL: "all",
 };
 
-export const API_BASE_URL = "https://snmpg4arm2.us-east-1.awsapprunner.com";
+export const API_BASE_URL = "http://localhost:3002";
   // "https://nestschoolbackend-production.up.railway.app";
 
 export const PAYMENT_MODE = {

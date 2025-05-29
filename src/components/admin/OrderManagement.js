@@ -25,8 +25,15 @@ const OrderManagement = ({ isVendor = false }) => {
   const [statusFilter, setStatusFilter] = useState("");
   const [productsMap, setProductsMap] = useState([]);
   const [barcode, setBarcode] = useState("");
+  const [modeOfDelivery, setModeOfDelivery] = useState(""); // New state for mode of delivery
   const barcodeInputRef = React.useRef(null);
   const itemsPerPage = 10;
+
+  // Define mode of delivery options
+  const deliveryOptions = [
+    { value: "Home Delivery", label: "Home Delivery" },
+    { value: "Pickup from School", label: "Pickup from School" }
+  ];
 
   useEffect(() => {
     const getOrders = async () => {
@@ -80,6 +87,7 @@ const OrderManagement = ({ isVendor = false }) => {
     setSelectedOrder(order);
     setNewStatus(order.status); // Set initial status
     setBarcode(order.trackingId);
+    setModeOfDelivery(order.modeOfDelivery || ""); // Set initial mode of delivery
     setShowModal(true);
   };
 
@@ -88,7 +96,11 @@ const OrderManagement = ({ isVendor = false }) => {
     setLoading(true);
     try {
       if (isVendor) {
-        await updateOrderStatus(selectedOrder.id, {status: newStatus, trackingId: barcode});
+        await updateOrderStatus(selectedOrder.id, {
+          status: newStatus, 
+          trackingId: barcode,
+          modeOfDelivery: modeOfDelivery // Include mode of delivery in update
+        });
       } else {
         await updateTransactionStatus(selectedOrder.id, newStatus);
       }
@@ -96,7 +108,12 @@ const OrderManagement = ({ isVendor = false }) => {
         prevOrders.map((order) =>
           order.id === selectedOrder.id
             ? isVendor
-              ? { ...order, status: newStatus, trackingId: barcode }
+              ? { 
+                  ...order, 
+                  status: newStatus, 
+                  trackingId: barcode,
+                  modeOfDelivery: modeOfDelivery 
+                }
               : { ...order, transactionStatus: newStatus }
             : order
         )
@@ -109,124 +126,162 @@ const OrderManagement = ({ isVendor = false }) => {
     }
   };
 
-  // Export to CSV function
-  const exportToCSV = async () => {
-    setLoading(true);
+  // Export to CSV function - Updated to include Mode of Delivery
+  // Updated exportToCSV function in OrderManagement component
+// Updated exportToCSV function with proper product names, sizes, and flags
+const exportToCSV = async () => {
+  setLoading(true);
 
-    try {
-      const headers = [
-        "S.No",
-        "USID",
-        "Student Name",
-        "Gender",
-        "Class",
-        "Section",
-        "House",
-        "Order ID",
-        "Product Name",
-        "Size",
-        "Quantity"
-      ];
+  try {
+    // Define all headers including the new fields
+    const headers = [
+      "S.No",
+      "USID",
+      "Student Name",
+      "Parent Name",
+      "Gender",
+      "Class",
+      "Section",
+      "House",
+      "Phone Number",
+      "Email",
+      "Order ID",
+      "Application Code",
+      "Product Name",
+      "Size",
+      "Size Flag",
+      "Quantity",
+      "Total Price",
+      "Transition Status",
+      "Order Date",
+      "Mode of Delivery",
+      "Billing Address",
+      "Shipping Address",
+      "Address Flag",
+    ];
 
-      let rows = [];
+    let rows = [];
 
-      if (productsMap.length === 0) {
-        const productIds = [];
-        const studentProductIds = {};
-        filteredOrders.forEach(order => {
-          order.items.forEach(item => {
-            if (item.bundle && item.bundle.bundleProducts) {
-              item.bundle.bundleProducts.forEach(product => {
-                if (product.optional === false) {
-                  if (product.productId && !productIds.includes(product.productId)) {
-                    productIds.push(product.productId);
-                  }
-                  if (item?.student?.id) {
-                    studentProductIds[item.student.id]?.length ? studentProductIds[item.student.id].push(product.productId) : studentProductIds[item.student.id] = [product.productId];
-                  }
-                }
-              });
+    // Fetch all products and sizes first
+    const productIds = [];
+    const studentProductIds = {};
+    
+    // Collect all product IDs and student-product mappings
+    filteredOrders.forEach(order => {
+      order.items.forEach(item => {
+        if (item.bundle && item.bundle.bundleProducts) {
+          item.bundle.bundleProducts.forEach(product => {
+            if (product.productId && !productIds.includes(product.productId)) {
+              productIds.push(product.productId);
+            }
+            if (item.student?.id) {
+              if (!studentProductIds[item.student.id]) {
+                studentProductIds[item.student.id] = [];
+              }
+              studentProductIds[item.student.id].push(product.productId);
             }
           });
-        });
-
-        // If no products, exit early
-        if (productIds.length === 0) {
-          toast.warning("No products found to export");
-          setLoading(false);
-          return;
         }
+      });
+    });
 
-        // Fetch all products by IDs
-        const products = await getProductsByIds(productIds);
-        const sizes = await getSizesInBulk(studentProductIds);
+    // Fetch all products and sizes in bulk
+    const products = await getProductsByIds(productIds);
+    const sizes = await getSizesInBulk(studentProductIds);
 
-        let counter = 1;
-        filteredOrders.forEach(order => {
-          order.items.forEach(item => {
-            const student = item.student || {};
-
-            if (item.bundle && item.bundle.bundleProducts) {
-              item.bundle.bundleProducts.forEach(bundleProduct => {
-                if (bundleProduct.optional === false) {
-                  const product = products[bundleProduct.productId] || {};
-
-                  // Get the size from sizes data if available
-                  let size = '';
-                  if (sizes[student.id] && sizes[student.id][bundleProduct.productId]) {
-                    size = sizes[student.id][bundleProduct.productId];
-                  }
-
-                  rows.push([
-                    counter++,
-                    student.usid || '',
-                    student.studentName || '',
-                    student.gender || '',
-                    student.class || '',
-                    student.section || '',
-                    student.house || '',
-                    order.id || '',
-                    product.name || '',
-                    size || '',
-                    bundleProduct.quantity || ''
-                  ]);
-                }
-              });
+    // Process each order to extract all required data
+    filteredOrders.forEach((order, orderIndex) => {
+      order.items.forEach(item => {
+        const student = item.student || {};
+        const parent = order.parent || {};
+        
+        if (item.bundle && item.bundle.bundleProducts) {
+          item.bundle.bundleProducts.forEach(bundleProduct => {
+            // Get product details
+            const product = products[bundleProduct.productId] || {};
+            
+            // Get size information
+            let size = '';
+            let sizeFlag = 'No';
+            if (student.id && sizes[student.id] && sizes[student.id][bundleProduct.productId]) {
+              size = sizes[student.id][bundleProduct.productId];
+              // Check if size was customized (you'll need to implement this logic based on your data)
+              // This is just an example - adjust according to your actual size customization detection
+              sizeFlag = bundleProduct.size && bundleProduct.size !== product.defaultSize ? 'Yes' : 'No';
             }
-          });
-        });
-        setProductsMap(rows);
-      } else {
-        rows = productsMap;
-      }
-      let csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n";
-      rows.forEach(row => {
-        // Escape any commas within fields
-        const escapedRow = row.map(field => {
-          const str = String(field || '');
-          return str.includes(',') ? `"${str}"` : str;
-        });
 
-        csvContent += escapedRow.join(",") + "\n";
+            // Calculate address flag
+            const billingAddress = student.address || '';
+            const shippingAddress = order.shippingAddress || student.address || '';
+            const addressFlag = billingAddress && shippingAddress && 
+                              billingAddress === shippingAddress ? 'No' : 'Yes';
+
+            rows.push([
+              orderIndex + 1, // S.No
+              student.usid || '',
+              student.studentName || '',  
+              parent.parentName || '',
+              student.gender || '',
+              student.class || '',
+              student.section || '',
+              student.house || '',
+              order.id || '',
+              order.payments[0]?.applicationCode || '',
+              product.name || bundleProduct.productName || '', 
+              parent.phoneNumber || '',
+              parent.email || '',
+              size || bundleProduct.size || '',
+              sizeFlag,
+              bundleProduct.quantity || '',
+              order.totalPrice || '',
+              isVendor ? order.status : order.transactionStatus || '',
+              new Date(order.createdAt).toLocaleDateString() || '',
+              order.modeOfDelivery || 'Not specified',
+              billingAddress,
+              shippingAddress,
+              addressFlag,
+            ]);
+          });
+        }
+      });
+    });
+
+    // If no data, show warning and exit
+    if (rows.length === 0) {
+      toast.warning("No orders found to export");
+      setLoading(false);
+      return;
+    }
+
+    // Create CSV content
+    let csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n";
+    rows.forEach(row => {
+      // Escape any commas within fields
+      const escapedRow = row.map(field => {
+        const str = String(field || '');
+        return str.includes(',') ? `"${str}"` : str;
       });
 
-      // Create a downloadable link
-      const encodedUri = encodeURI(csvContent);
-      const link = document.createElement("a");
-      link.setAttribute("href", encodedUri);
-      link.setAttribute("download", "Order_Details.csv");
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (error) {
-      console.error("Error exporting data:", error);
-      toast.error("Failed to export data");
-    } finally {
-      setLoading(false);
-    }
-  };
+      csvContent += escapedRow.join(",") + "\n";
+    });
 
+    // Create a downloadable link
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "Order_Details_With_All_Fields.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error("Error exporting data:", error);
+    toast.error("Failed to export data");
+  } finally {
+    setLoading(false);
+  }
+};
 
+  // Updated printOrderSlip to include Mode of Delivery
   const printOrderSlip = async (order) => {
     setLoading(true);
     try {      
@@ -297,7 +352,7 @@ const OrderManagement = ({ isVendor = false }) => {
         `;
       });
       
-      // Set the full HTML template
+      // Set the full HTML template with Mode of Delivery
       tempDiv.innerHTML = `
         <div style="padding: 20px; font-family: Arial, sans-serif; font-size: 18px;">
           <table style="width: 100%; border-collapse: collapse; border: 1px solid black;">
@@ -323,6 +378,11 @@ const OrderManagement = ({ isVendor = false }) => {
               </td>
               <td style="padding: 8px; border: 1px solid black; text-align: center;">
                 <strong>Order Id : ${order.id}</strong>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="2" style="padding: 8px; border: 1px solid black; text-align: center;">
+                <strong>Mode of Delivery : ${order.modeOfDelivery || 'Not specified'}</strong>
               </td>
             </tr>
           </table>
@@ -436,6 +496,7 @@ const OrderManagement = ({ isVendor = false }) => {
               <th>Contact Number</th>
               <th>Total Price</th>
               <th>{isVendor ? "Delivery Status" : "Transaction Status"}</th>
+              <th>Mode of Delivery</th> {/* New column */}
               <th>Order Date</th>
               <th>Actions</th>
             </tr>
@@ -450,6 +511,7 @@ const OrderManagement = ({ isVendor = false }) => {
                   <td>{order.parent?.phoneNumber}</td>
                   <td>{order.totalPrice}</td>
                   <td className="text-capitalize">{isVendor ? order.status : order.transactionStatus}</td>
+                  <td>{order.modeOfDelivery || 'Not specified'}</td> {/* New column data */}
                   <td>{new Date(order.createdAt).toLocaleDateString()}</td>
                   <td className="d-flex justify-content-center">
                     <button
@@ -470,7 +532,7 @@ const OrderManagement = ({ isVendor = false }) => {
               ))
             ) : (
               <tr>
-                <td colSpan="6" className="text-center">
+                <td colSpan="9" className="text-center"> {/* Updated colspan */}
                   No orders found.
                 </td>
               </tr>
@@ -618,6 +680,24 @@ const OrderManagement = ({ isVendor = false }) => {
                   </>
                 )}
               </Form.Select>
+
+              {/* Mode of Delivery Selector */}
+              {isVendor && (
+                <div className="mt-3">
+                  <h5>Mode of Delivery</h5>
+                  <Form.Select
+                    value={modeOfDelivery}
+                    onChange={(e) => setModeOfDelivery(e.target.value)}
+                  >
+                    <option value="">Select Delivery Mode</option>
+                    {deliveryOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </Form.Select>
+                </div>
+              )}
 
               <div className="mt-3">
                 <h5>Scan Barcode</h5>
