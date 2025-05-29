@@ -106,13 +106,15 @@ export const loadingCartChange = (value) => (dispatch) => {
 };
 
 export const orderPlaced =
-  ({ parentId, paymentMethod, shippingMethod }) =>
+  ({ parentId, paymentMethod, shippingMethod, isAddressEdited , deliveryAddress }) =>
   async (dispatch) => {
     try {
       const res = await post("/orders/cart", {
         parentId,
         shippingMethod,
         paymentMethod,
+        isAddressEdited,
+        deliveryAddress,
       });
 
       // If API returns error inside the response (but HTTP 200 OK)
@@ -145,7 +147,7 @@ export const paymentConfig = async (orderId) => {
 };
 
 export const paymentSuccess =
-  ({ order_id, bank_reference_id, transaction_timestamp, application_code, cartItems }) =>
+  ({ order_id, bank_reference_id, transaction_timestamp, application_code, cartItems, payment_group }) =>
   async (dispatch) => {
     try {
       const res = await post("/payment/success", {
@@ -154,6 +156,7 @@ export const paymentSuccess =
         transaction_timestamp,
         application_code,
         cartItems,
+        payment_group
       });
       dispatch({
         type: ORDER_PLACED_SUCCESSFULLY,

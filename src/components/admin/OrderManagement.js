@@ -125,20 +125,25 @@ const OrderManagement = ({ isVendor = false }) => {
         "S.No",
         "USID",
         "Student Name",
+        "Parent Name",
         "Gender",
         "Class",
         "Section",
         "House",
-        "Address",
         "Order ID",
+        "Application Code",
         "Product Name",
         "Size",
         "Flag for Sizes(Yes for Values entered)",
-        "Quantity",
-        "Paid Price",
-        "Bundle Price",
-        "Price Difference",
-        "Is Home Delivery"
+        "Product Quantity",
+        "Bundle Quantity",
+        "Total Price",
+        "Transaction Status",
+        "Order Date",
+        "Mode of Delivery",
+        "Billing Address",
+        "Shipping Address",
+        "Flag for Address"
       ];
 
       let rows = [];
@@ -195,20 +200,25 @@ const OrderManagement = ({ isVendor = false }) => {
                   counter++,
                   student.usid || '',
                   student.studentName || '',
+                  order.parent?.parentName || '',
                   student.gender || '',
                   student.class || '',
                   student.section || '',
                   student.house || '',
-                  student.address || '',
                   order.id || '',
+                  order.payments.filter(payment => payment.status === "PAID")[0]?.applicationCode || '',
                   product.name || '',
                   size?.size || '',
                   size && size?.createdAt && new Date(size?.createdAt) > new Date('2025-05-26T23:59:59.999Z') ? 'Yes' : 'No',
                   bundleProduct.quantity || '',
+                  item.quantity || '',
                   order.totalPrice || '',
-                  item.unitPrice || '',
-                  Number(order.totalPrice) - Number(item.unitPrice) || '',
-                  Number(order.totalPrice) - Number(item.unitPrice) === 500 ? 'Yes' : 'No'
+                  order.transactionStatus || '',
+                  new Date(order.updatedAt).toLocaleDateString() || '',
+                  order.shippingMethod || '',
+                  student?.address || '',
+                  order?.deliveryAddress || '',
+                  order?.isAddressEdited ? 'Yes' : 'No'
                 ]);
               }
             });

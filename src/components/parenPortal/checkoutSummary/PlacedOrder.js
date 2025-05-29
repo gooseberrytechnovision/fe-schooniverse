@@ -13,10 +13,8 @@ import {
   paymentError,
   paymentSuccess,
 } from "../../../actions/product";
-import { updateStudentDetail } from "../../../actions/student";
 import FullPageSpinner from "../../layout/FullPageSpinner";
 import { SHIPPING_CHARGES } from "../../../utils/constants";
-import { UPDATE_CART_ITEMS } from "../../../actions/types";
 import { verifyGqPaymentStatus } from "../../../actions/product";
 
 const PlaceOrder = () => {
@@ -37,7 +35,6 @@ const PlaceOrder = () => {
   const [shippingMethod, setShippingMethod] = useState("school");
   const [isEditingAddress, setIsEditingAddress] = useState(false);
   const [editedAddress, setEditedAddress] = useState("");
-  const [addressUpdateLoading, setAddressUpdateLoading] = useState(false);
 
   useEffect(() => {
     const fetchCart = async () => {
@@ -67,6 +64,7 @@ const PlaceOrder = () => {
       setGrandTotal(
         shippingMethod === "home" ? total + SHIPPING_CHARGES : total
       );
+      setEditedAddress(cartData.items[0]?.student?.address || "");
     } else {
       setTotalQuantity(0);
       setGrandTotal(0);
@@ -74,10 +72,16 @@ const PlaceOrder = () => {
   }, [cartData?.items, shippingMethod]);
 
   useEffect(() => {
-    const handleGqSuccess = (paymentResponse) => {
+    const handleGqSuccess = async (paymentResponse) => {
       const paymentData = paymentResponse?.gqData?.data;
       if (paymentData.event === "dt.payment.captured") {
         dispatch(paymentSuccess({ order_id: orderId, ...paymentData, cartItems: cartData.items }));
+        setPaymentDone(true);
+        localStorage.setItem("orderId", orderId);
+      }
+      const verifiedPayment = await verifyGqPaymentStatus(paymentData.application_code);
+      if (verifiedPayment && verifiedPayment.payment_status === "PAID") {
+        dispatch(paymentSuccess({ order_id: orderId, ...verifiedPayment, cartItems: cartData.items }));
         setPaymentDone(true);
         localStorage.setItem("orderId", orderId);
       }
@@ -132,6 +136,7 @@ const PlaceOrder = () => {
           dispatch(paymentSuccess({ order_id: orderId, ...verifiedPayment, cartItems: cartData.items }));
           setPaymentDone(true);
           localStorage.setItem("orderId", orderId);
+          navigate(`/thankyou/${orderId}`);
         }
       }
     };
@@ -148,6 +153,16 @@ const PlaceOrder = () => {
   });
 
   const handlePlaceOrder = () => {
+    const originalAddress = cartData.items[0]?.student?.address || "";
+    if (!editedAddress.trim()) {
+      setIsEditingAddress(originalAddress);
+      if (!editedAddress.trim()) {
+        toast.error("Address cannot be empty", { position: "top-right" });
+      }
+    }
+
+    const isAddressEdited = editedAddress.trim() !== originalAddress.trim();
+      
     if (!cartData?.items?.length) {
       toast.warning("Your cart is empty!", { position: "top-right" });
       return;
@@ -158,6 +173,8 @@ const PlaceOrder = () => {
         parentId: user.id,
         shippingMethod: shippingMethod,
         paymentMethod: method,
+        isAddressEdited: shippingMethod === "home" ? isAddressEdited : false,
+        deliveryAddress: shippingMethod === "home" ? editedAddress : "",
       })
     )
       .then((orderInfo) => {
@@ -190,50 +207,15 @@ const PlaceOrder = () => {
   };
 
   const handleEditAddress = () => {
-    setEditedAddress(cartData.items[0]?.student?.address || "");
     setIsEditingAddress(true);
   };
 
   const handleSaveAddress = async () => {
-    if (!editedAddress.trim()) {
-      toast.error("Address cannot be empty", { position: "top-right" });
-      return;
-    }
-
-    setAddressUpdateLoading(true);
-    try {
-      const studentId = cartData.items[0]?.student?.usid;
-      if (!studentId) {
-        toast.error("Student information not found", { position: "top-right" });
-        return;
-      }
-      
-      await updateStudentDetail({ address: editedAddress }, studentId);
-      
-      // Update local cart data to show new address
-      const updatedItems = [...cartData.items];
-      updatedItems[0] = {
-        ...updatedItems[0],
-        student: {
-          ...updatedItems[0].student,
-          address: editedAddress
-        }
-      };
-      dispatch({ 
-        type: UPDATE_CART_ITEMS, 
-        payload: updatedItems
-      });
-      
-      toast.success("Address updated successfully", { position: "top-right" });
       setIsEditingAddress(false);
-    } catch (error) {
-      toast.error("Failed to update address", { position: "top-right" });
-    } finally {
-      setAddressUpdateLoading(false);
-    }
   };
 
   const handleCancelEdit = () => {
+    setEditedAddress(cartData.items[0]?.student?.address || "");
     setIsEditingAddress(false);
   };
 
@@ -382,14 +364,12 @@ const PlaceOrder = () => {
                             <button 
                               className="btn btn-sm btn-primary"
                               onClick={handleSaveAddress}
-                              disabled={addressUpdateLoading}
                             >
-                              {addressUpdateLoading ? 'Saving...' : 'Save'}
+                              Save
                             </button>
                             <button 
                               className="btn btn-sm btn-outline-secondary"
                               onClick={handleCancelEdit}
-                              disabled={addressUpdateLoading}
                             >
                               Cancel
                             </button>
@@ -397,7 +377,7 @@ const PlaceOrder = () => {
                         </div>
                       ) : (
                       <p className="text-muted mb-0">
-                        {cartData.items[0].student.address}
+                        {editedAddress}
                       </p>
                       )}
                     </div>
