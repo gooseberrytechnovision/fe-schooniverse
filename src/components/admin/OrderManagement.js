@@ -115,7 +115,7 @@ const OrderManagement = ({ isVendor = false }) => {
       setLoading(false);
     }
   };
-  
+
   // Export to CSV function
   const exportToCSV = async () => {
     setLoading(true);
@@ -217,7 +217,8 @@ const OrderManagement = ({ isVendor = false }) => {
       });
       console.log(multiOrder);
 
-      let csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n";
+      // Convert data to CSV content
+      let csvContent = headers.join(",") + "\n";
       rows.forEach(row => {
         // Escape any commas within fields
         const escapedRow = row.map(field => {
@@ -228,14 +229,20 @@ const OrderManagement = ({ isVendor = false }) => {
         csvContent += escapedRow.join(",") + "\n";
       });
 
-      // Create a downloadable link
-      const encodedUri = encodeURI(csvContent);
+      // Use Blob API instead of data URI for better handling of large files
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
-      link.setAttribute("href", encodedUri);
+      link.setAttribute("href", url);
       link.setAttribute("download", "Order_Details.csv");
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
+      
+      // Clean up
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }, 100);
     } catch (error) {
       console.error("Error exporting data:", error);
       toast.error("Failed to export data");
@@ -287,7 +294,7 @@ const OrderManagement = ({ isVendor = false }) => {
       let productRowsHtml = '';
       const productRows = [];
       let rowCounter = 0;
-
+      
       // Add actual product rows
       order.items.forEach(item => {
         if (item.bundle && item.bundle.bundleProducts) {
@@ -437,7 +444,7 @@ const OrderManagement = ({ isVendor = false }) => {
           </Form.Select>
         </div>
       </div>
-      
+
       {/* Export Button */}
       <div className="mb-3 float-end">
         <Button variant="success" onClick={exportToCSV}>
@@ -510,7 +517,7 @@ const OrderManagement = ({ isVendor = false }) => {
         </span>
         <button
           className="btn btn-primary"
-         disabled={currentPage === totalPages}
+          disabled={currentPage === totalPages}
           onClick={() => setCurrentPage((prev) => prev + 1)}
         >
           Next
