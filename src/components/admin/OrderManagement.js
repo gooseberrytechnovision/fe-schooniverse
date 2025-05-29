@@ -63,12 +63,20 @@ const OrderManagement = ({ isVendor = false }) => {
         return true;
       })
       .filter((order) => {
-        if (statusFilter) {
-          return order.status.toLowerCase() === statusFilter.toLowerCase();
-        }
-        return true;
+        if (!statusFilter) return true;
+        
+        const orderStatus = isVendor 
+          ? order?.status?.toLowerCase() 
+          : order?.transactionStatus?.toLowerCase();
+        
+        return orderStatus === statusFilter.toLowerCase();
       });
-  }, [orders, searchTerm, startDate, endDate, statusFilter]);
+  }, [orders, searchTerm, startDate, endDate, statusFilter, isVendor]);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, startDate, endDate, statusFilter]);
 
   const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
   const paginatedOrders = filteredOrders.slice(
@@ -79,7 +87,7 @@ const OrderManagement = ({ isVendor = false }) => {
   const onView = (order) => {
     setSelectedOrder(order);
     setNewStatus(order.status); // Set initial status
-    setBarcode(order.trackingId);
+    setBarcode(order.trackingId || "");
     setShowModal(true);
   };
 
@@ -108,7 +116,7 @@ const OrderManagement = ({ isVendor = false }) => {
       setLoading(false);
     }
   };
-
+  
   // Export to CSV function
   const exportToCSV = async () => {
     setLoading(true);
@@ -269,7 +277,7 @@ const OrderManagement = ({ isVendor = false }) => {
       let productRowsHtml = '';
       const productRows = [];
       let rowCounter = 0;
-      
+
       // Add actual product rows
       order.items.forEach(item => {
         if (item.bundle && item.bundle.bundleProducts) {
@@ -419,7 +427,7 @@ const OrderManagement = ({ isVendor = false }) => {
           </Form.Select>
         </div>
       </div>
-
+      
       {/* Export Button */}
       <div className="mb-3 float-end">
         <Button variant="success" onClick={exportToCSV}>
@@ -492,7 +500,7 @@ const OrderManagement = ({ isVendor = false }) => {
         </span>
         <button
           className="btn btn-primary"
-          disabled={currentPage === totalPages}
+         disabled={currentPage === totalPages}
           onClick={() => setCurrentPage((prev) => prev + 1)}
         >
           Next
