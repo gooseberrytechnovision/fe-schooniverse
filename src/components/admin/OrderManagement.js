@@ -23,7 +23,6 @@ const OrderManagement = ({ isVendor = false }) => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-  const [productsMap, setProductsMap] = useState([]);
   const [barcode, setBarcode] = useState("");
   const barcodeInputRef = React.useRef(null);
   const itemsPerPage = 10;
@@ -130,83 +129,94 @@ const OrderManagement = ({ isVendor = false }) => {
         "Class",
         "Section",
         "House",
+        "Address",
         "Order ID",
         "Product Name",
         "Size",
-        "Quantity"
+        "Flag for Sizes(Yes for Values entered)",
+        "Quantity",
+        "Paid Price",
+        "Bundle Price",
+        "Price Difference",
+        "Is Home Delivery"
       ];
 
       let rows = [];
+      let multiOrder=[]
 
-      if (productsMap.length === 0) {
-        const productIds = [];
-        const studentProductIds = {};
-        filteredOrders.forEach(order => {
-          order.items.forEach(item => {
-            if (item.bundle && item.bundle.bundleProducts) {
-              item.bundle.bundleProducts.forEach(product => {
-                if (product.optional === false) {
-                  if (product.productId && !productIds.includes(product.productId)) {
-                    productIds.push(product.productId);
-                  }
-                  if (item?.student?.id) {
-                    studentProductIds[item.student.id]?.length ? studentProductIds[item.student.id].push(product.productId) : studentProductIds[item.student.id] = [product.productId];
-                  }
+      const productIds = [];
+      const studentProductIds = {};
+      filteredOrders.forEach(order => {
+        order.items.forEach(item => {
+          if (item.bundle && item.bundle.bundleProducts) {
+            item.bundle.bundleProducts.forEach(product => {
+              if (product.optional === false) {
+                if (product.productId && !productIds.includes(product.productId)) {
+                  productIds.push(product.productId);
                 }
-              });
-            }
-          });
-        });
-
-        // If no products, exit early
-        if (productIds.length === 0) {
-          toast.warning("No products found to export");
-          setLoading(false);
-          return;
-        }
-
-        // Fetch all products by IDs
-        const products = await getProductsByIds(productIds);
-        const sizes = await getSizesInBulk(studentProductIds);
-
-        let counter = 1;
-        filteredOrders.forEach(order => {
-          order.items.forEach(item => {
-            const student = item.student || {};
-
-            if (item.bundle && item.bundle.bundleProducts) {
-              item.bundle.bundleProducts.forEach(bundleProduct => {
-                if (bundleProduct.optional === false) {
-                  const product = products[bundleProduct.productId] || {};
-
-                  // Get the size from sizes data if available
-                  let size = '';
-                  if (sizes[student.id] && sizes[student.id][bundleProduct.productId]) {
-                    size = sizes[student.id][bundleProduct.productId];
-                  }
-
-                  rows.push([
-                    counter++,
-                    student.usid || '',
-                    student.studentName || '',
-                    student.gender || '',
-                    student.class || '',
-                    student.section || '',
-                    student.house || '',
-                    order.id || '',
-                    product.name || '',
-                    size || '',
-                    bundleProduct.quantity || ''
-                  ]);
+                if (item?.student?.id) {
+                  studentProductIds[item.student.id]?.length ? studentProductIds[item.student.id].push(product.productId) : studentProductIds[item.student.id] = [product.productId];
                 }
-              });
-            }
-          });
+              }
+            });
+          }
         });
-        setProductsMap(rows);
-      } else {
-        rows = productsMap;
+      });
+
+      // If no products, exit early
+      if (productIds.length === 0) {
+        toast.warning("No products found to export");
+        setLoading(false);
+        return;
       }
+      // Fetch all products by IDs
+      const products = await getProductsByIds(productIds);
+      const sizes = await getSizesInBulk(studentProductIds);
+      let counter = 1;
+      filteredOrders.forEach(order => {
+        order.items.forEach(item => {
+          if (order.items.length > 1) {
+            multiOrder.push(order.id);
+          }
+          const student = item.student || {};
+
+          if (item.bundle && item.bundle.bundleProducts) {
+            item.bundle.bundleProducts.forEach(bundleProduct => {
+              if (bundleProduct.optional === false) {
+                const product = products[bundleProduct.productId] || {};
+
+                // Get the size from sizes data if available
+                let size;
+                if (sizes[student.id] && sizes[student.id][bundleProduct.productId]) {
+                  size = sizes[student.id][bundleProduct.productId];
+                }
+
+                rows.push([
+                  counter++,
+                  student.usid || '',
+                  student.studentName || '',
+                  student.gender || '',
+                  student.class || '',
+                  student.section || '',
+                  student.house || '',
+                  student.address || '',
+                  order.id || '',
+                  product.name || '',
+                  size?.size || '',
+                  size && size?.createdAt && new Date(size?.createdAt) > new Date('2025-05-26T23:59:59.999Z') ? 'Yes' : 'No',
+                  bundleProduct.quantity || '',
+                  order.totalPrice || '',
+                  item.unitPrice || '',
+                  Number(order.totalPrice) - Number(item.unitPrice) || '',
+                  Number(order.totalPrice) - Number(item.unitPrice) === 500 ? 'Yes' : 'No'
+                ]);
+              }
+            });
+          }
+        });
+      });
+      console.log(multiOrder);
+
       let csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n";
       rows.forEach(row => {
         // Escape any commas within fields
@@ -283,7 +293,7 @@ const OrderManagement = ({ isVendor = false }) => {
         if (item.bundle && item.bundle.bundleProducts) {
           item.bundle.bundleProducts.forEach(product => {
             const productObj = products[product.productId] || {};
-            const size = student.id && sizes[student.id] ? sizes[student.id][product.productId] || '' : '';
+            const size = student.id && sizes[student.id] ? sizes[student.id][product.productId]?.size || '' : '';
             
             productRows.push({
               name: productObj.name || product.productName || '',
