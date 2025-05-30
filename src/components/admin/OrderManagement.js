@@ -147,7 +147,6 @@ const OrderManagement = ({ isVendor = false }) => {
       ];
 
       let rows = [];
-      let multiOrder=[]
 
       const productIds = [];
       const studentProductIds = {};
@@ -180,9 +179,6 @@ const OrderManagement = ({ isVendor = false }) => {
       let counter = 1;
       filteredOrders.forEach(order => {
         order.items.forEach(item => {
-          if (order.items.length > 1) {
-            multiOrder.push(order.id);
-          }
           const student = item.student || {};
 
           if (item.bundle && item.bundle.bundleProducts) {
@@ -225,7 +221,6 @@ const OrderManagement = ({ isVendor = false }) => {
           }
         });
       });
-      console.log(multiOrder);
 
       // Convert data to CSV content
       let csvContent = headers.join(",") + "\n";
@@ -264,53 +259,62 @@ const OrderManagement = ({ isVendor = false }) => {
 
   const printOrderSlip = async (order) => {
     setLoading(true);
-    try {      
-      const student = order.items[0]?.student || {};
-      
-      const productIds = [];
-      const studentProductIds = {};
-      
-      if (student.id) {
-        studentProductIds[student.id] = [];
-      }
+    try {
+      const allProductIds = [];
+      const studentProductMap = {};
       
       order.items.forEach(item => {
         if (item.bundle && item.bundle.bundleProducts) {
           item.bundle.bundleProducts.forEach(product => {
-            if (product.productId && !productIds.includes(product.productId)) {
-              productIds.push(product.productId);
-              
-              if (student.id) {
-                studentProductIds[student.id].push(product.productId);
+            if (product.productId) {
+              if(!allProductIds.includes(product.productId)) allProductIds.push(product.productId);
+              if(studentProductMap[item?.student?.id]?.length){
+                studentProductMap[item.student.id].push(product.productId);
+              } else{
+                studentProductMap[item.student.id] = [product.productId];
               }
             }
           });
         }
       });
       
-      // Fetch product and size data
-      const products = await getProductsByIds(productIds);
-      const sizes = student.id ? await getSizesInBulk(studentProductIds) : {};
-
-      // Create a temporary container for our HTML template
-      const tempDiv = document.createElement('div');
-      tempDiv.style.position = 'absolute';
-      tempDiv.style.left = '-9999px';
-      tempDiv.style.top = '-9999px';
-      tempDiv.style.width = '210mm'; // A4 width
-      document.body.appendChild(tempDiv);
-
-      // Build the product rows HTML
-      let productRowsHtml = '';
-      const productRows = [];
-      let rowCounter = 0;
+      // Fetch all products and sizes at once
+      const products = await getProductsByIds(allProductIds);
+      const sizes = await getSizesInBulk(studentProductMap);
       
-      // Add actual product rows
-      order.items.forEach(item => {
+      // Create a new PDF
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      
+      // Generate a page for each item (student)
+      for (let itemIndex = 0; itemIndex < order.items.length; itemIndex++) {
+        const item = order.items[itemIndex];
+        const student = item.student || {};
+        
+        // Add a new page for each item after the first one
+        if (itemIndex > 0) {
+          pdf.addPage();
+        }
+        
+        // Create temporary container for HTML template
+        const tempDiv = document.createElement('div');
+        tempDiv.style.position = 'absolute';
+        tempDiv.style.left = '-9999px';
+        tempDiv.style.top = '-9999px';
+        tempDiv.style.width = '210mm'; // A4 width
+        document.body.appendChild(tempDiv);
+        
+        // Build product rows for this specific item/student
+        let productRowsHtml = '';
+        const productRows = [];
+        
         if (item.bundle && item.bundle.bundleProducts) {
           item.bundle.bundleProducts.forEach(product => {
+            // Skip optional products
+            if (product.optional === true) return;
+            
             const productObj = products[product.productId] || {};
-            const size = student.id && sizes[student.id] ? sizes[student.id][product.productId]?.size || '' : '';
+            const size = student.id && sizes[student.id] ? 
+              sizes[student.id][product.productId]?.size || '' : '';
             
             productRows.push({
               name: productObj.name || product.productName || '',
@@ -319,80 +323,99 @@ const OrderManagement = ({ isVendor = false }) => {
             });
           });
         }
-      });
-      
-      // Create rows HTML
-      productRows.forEach(product => {
-        productRowsHtml += `
-          <tr>
-            <td style="padding: 8px; border: 1px solid black; text-align: center;">${product.name}</td>
-            <td style="padding: 8px; border: 1px solid black; text-align: center;">${product.size}</td>
-            <td style="padding: 8px; border: 1px solid black; text-align: center;">${product.quantity}</td>
-          </tr>
-        `;
-      });
-      
+        
+        // Create rows HTML for this item
+        productRows.forEach(product => {
+          productRowsHtml += `
+            <tr>
+              <td style="padding: 8px; border: 1px solid black; text-align: center;">${product.name}</td>
+              <td style="padding: 8px; border: 1px solid black; text-align: center;">${product.size}</td>
+              <td style="padding: 8px; border: 1px solid black; text-align: center;">${product.quantity}</td>
+            </tr>
+          `;
+        });
+        
       // Set the full HTML template
-      tempDiv.innerHTML = `
-        <div style="padding: 20px; font-family: Arial, sans-serif; font-size: 18px;">
-          <table style="width: 100%; border-collapse: collapse; border: 1px solid black;">
-            <tr>
-              <td style="padding: 8px; border: 1px solid black; width: 50%; text-align: center;">
-                <strong>Student Name : ${student.studentName || ''}</strong>
-              </td>
-              <td style="padding: 8px; border: 1px solid black; width: 50%; text-align: center;">
-                <strong>Student Id : ${student.usid || ''}</strong>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding: 8px; border: 1px solid black; text-align: center;">
-                <strong>Gender : ${student.gender || ''}</strong>
-              </td>
-              <td style="padding: 8px; border: 1px solid black; text-align: center;">
-                <strong>Grade & Sec : ${student.class || ''}${student.section ? '-' + student.section : ''}</strong>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding: 8px; border: 1px solid black; text-align: center;">
-                <strong>House : ${student.house || ''}</strong>
-              </td>
-              <td style="padding: 8px; border: 1px solid black; text-align: center;">
-                <strong>Order Id : ${order.id}</strong>
-              </td>
-            </tr>
-          </table>
+        tempDiv.innerHTML = `
+          <div style="padding: 20px; font-family: Arial, sans-serif; font-size: 18px;">
+            <table style="width: 100%; border-collapse: collapse; border: 1px solid black;">
+              <tr>
+                <td style="padding: 8px; border: 1px solid black; width: 50%; text-align: center;">
+                  <strong>Student Name : ${student.studentName || ''}</strong>
+                </td>
+                <td style="padding: 8px; border: 1px solid black; width: 50%; text-align: center;">
+                  <strong>Student Id : ${student.usid || ''}</strong>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 8px; border: 1px solid black; text-align: center;">
+                  <strong>Gender : ${student.gender || ''}</strong>
+                </td>
+                <td style="padding: 8px; border: 1px solid black; text-align: center;">
+                  <strong>Grade & Sec : ${student.class || ''}${student.section ? '-' + student.section : ''}</strong>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 8px; border: 1px solid black; text-align: center;">
+                  <strong>House : ${student.house || ''}</strong>
+                </td>
+                <td style="padding: 8px; border: 1px solid black; text-align: center;">
+                  <strong>Order Id : ${order.id}</strong>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 8px; border: 1px solid black; text-align: center;">
+                  <strong>Bundle Quantity : ${item.quantity || '1'}</strong>
+                </td>
+                <td style="padding: 8px; border: 1px solid black; text-align: center;">
+                  <strong>Mode of Delivery : ${order.shippingMethod || 'School'}</strong>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 8px; border: 1px solid black; text-align: center;">
+                  <strong>Billing Address : ${student.address || ''}, ${order?.parent?.phoneNumber || ''}</strong>
+                </td>
+                <td style="padding: 8px; border: 1px solid black; text-align: center;">
+                  <strong>Delivery Address : ${order.deliveryAddress ? `${order.deliveryAddress}, ${order?.parent?.phoneNumber || ''}` : '-'}</strong>
+                </td>
+              </tr>
+            </table>
+            
+            <table style="width: 100%; border-collapse: collapse; border: 1px solid black; margin-top: 5px;">
+              <tr style="background-color: yellow;">
+                <th style="padding: 8px; border: 1px solid black; width: 60%; text-align: center;">Product</th>
+                <th style="padding: 8px; border: 1px solid black; width: 20%; text-align: center;">Size</th>
+                <th style="padding: 8px; border: 1px solid black; width: 20%; text-align: center;">Quantity</th>
+              </tr>
+              ${productRowsHtml}
+            </table>
+          </div>
+        `;
+        
+        try {
+          // Convert HTML to canvas
+          const canvas = await html2canvas(tempDiv, {
+            scale: 2,
+            logging: false,
+            useCORS: true,
+            allowTaint: true
+          });
           
-          <table style="width: 100%; border-collapse: collapse; border: 1px solid black; margin-top: 5px;">
-            <tr style="background-color: yellow;">
-              <th style="padding: 8px; border: 1px solid black; width: 60%; text-align: center;">Product</th>
-              <th style="padding: 8px; border: 1px solid black; width: 20%; text-align: center;">Size</th>
-              <th style="padding: 8px; border: 1px solid black; width: 20%; text-align: center;">Quantity</th>
-            </tr>
-            ${productRowsHtml}
-          </table>
-        </div>
-      `;
+          // Add canvas to the PDF on the current page
+          const imgData = canvas.toDataURL('image/png');
+          const imgProps = pdf.getImageProperties(imgData);
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+          
+          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        } finally {
+          // Clean up the temporary div
+          document.body.removeChild(tempDiv);
+        }
+      }
       
-      // Use html2canvas to convert our template to an image
-      const canvas = await html2canvas(tempDiv, {
-        scale: 2, // Higher scale for better quality
-        logging: false,
-        useCORS: true,
-        allowTaint: true
-      });
-      
-      // Create PDF with the image
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgProps = pdf.getImageProperties(imgData);
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-      
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      // Save the multi-page PDF
       pdf.save(`Order_Slip_${order.id}.pdf`);
-      
-      // Clean up
-      document.body.removeChild(tempDiv);
       
     } catch (error) {
       console.error("Error generating PDF:", error);
