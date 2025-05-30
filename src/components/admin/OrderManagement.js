@@ -472,6 +472,7 @@ const OrderManagement = ({ isVendor = false }) => {
               <th>Total Price</th>
               <th>{isVendor ? "Delivery Status" : "Transaction Status"}</th>
               <th>Order Date</th>
+              <th>Mode of Delivery</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -486,6 +487,7 @@ const OrderManagement = ({ isVendor = false }) => {
                   <td>{order.totalPrice}</td>
                   <td className="text-capitalize">{isVendor ? order.status : order.transactionStatus}</td>
                   <td>{new Date(order.createdAt).toLocaleDateString()}</td>
+                  <td>{order.shippingMethod || '-'}</td>
                   <td className="d-flex justify-content-center">
                     <button
                       className="btn btn-primary btn-sm me-2"
