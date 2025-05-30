@@ -11,6 +11,7 @@ import {
 import { toast } from "react-toastify";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import JsBarcode from "jsbarcode";
 
 const OrderManagement = ({ isVendor = false }) => {
   const [orders, setOrders] = useState([]);
@@ -335,64 +336,90 @@ const OrderManagement = ({ isVendor = false }) => {
           `;
         });
         
-      // Set the full HTML template
+        // Create barcode canvas for student ID
+        const barcodeContainer = document.createElement('div');
+        barcodeContainer.style.textAlign = 'center';
+        barcodeContainer.style.marginBottom = '10px';
+        
+        const barcodeCanvas = document.createElement('svg');
+        barcodeCanvas.id = `barcode-${itemIndex}`;
+        barcodeContainer.appendChild(barcodeCanvas);
+        
+        // Set the full HTML template
         tempDiv.innerHTML = `
-          <div style="padding: 20px; font-family: Arial, sans-serif; font-size: 18px;">
-            <table style="width: 100%; border-collapse: collapse; border: 1px solid black;">
-              <tr>
-                <td style="padding: 8px; border: 1px solid black; width: 50%; text-align: center;">
-                  <strong>Student Name : ${student.studentName || ''}</strong>
-                </td>
-                <td style="padding: 8px; border: 1px solid black; width: 50%; text-align: center;">
-                  <strong>Student Id : ${student.usid || ''}</strong>
-                </td>
-              </tr>
-              <tr>
-                <td style="padding: 8px; border: 1px solid black; text-align: center;">
-                  <strong>Gender : ${student.gender || ''}</strong>
-                </td>
-                <td style="padding: 8px; border: 1px solid black; text-align: center;">
-                  <strong>Grade & Sec : ${student.class || ''}${student.section ? '-' + student.section : ''}</strong>
-                </td>
-              </tr>
-              <tr>
-                <td style="padding: 8px; border: 1px solid black; text-align: center;">
-                  <strong>House : ${student.house || ''}</strong>
-                </td>
-                <td style="padding: 8px; border: 1px solid black; text-align: center;">
-                  <strong>Order Id : ${order.id}</strong>
-                </td>
-              </tr>
-              <tr>
-                <td style="padding: 8px; border: 1px solid black; text-align: center;">
-                  <strong>Bundle Quantity : ${item.quantity || '1'}</strong>
-                </td>
-                <td style="padding: 8px; border: 1px solid black; text-align: center;">
-                  <strong>Mode of Delivery : ${order.shippingMethod || 'School'}</strong>
-                </td>
-              </tr>
-              <tr>
-                <td style="padding: 8px; border: 1px solid black; text-align: center;">
-                  <strong>Billing Address : ${student.address || ''}, ${order?.parent?.phoneNumber || ''}</strong>
-                </td>
-                <td style="padding: 8px; border: 1px solid black; text-align: center;">
-                  <strong>Delivery Address : ${order.deliveryAddress ? `${order.deliveryAddress}, ${order?.parent?.phoneNumber || ''}` : '-'}</strong>
-                </td>
-              </tr>
-            </table>
-            
-            <table style="width: 100%; border-collapse: collapse; border: 1px solid black; margin-top: 5px;">
-              <tr style="background-color: yellow;">
-                <th style="padding: 8px; border: 1px solid black; width: 60%; text-align: center;">Product</th>
-                <th style="padding: 8px; border: 1px solid black; width: 20%; text-align: center;">Size</th>
-                <th style="padding: 8px; border: 1px solid black; width: 20%; text-align: center;">Quantity</th>
-              </tr>
-              ${productRowsHtml}
-            </table>
-          </div>
-        `;
+          <div id="barcode-container" style="text-align: center; margin: 20px auto; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+               <svg id="barcode-${itemIndex}" style="width: 250px; height: 70px;"></svg>
+           </div>
+            <div style="padding: 20px; font-family: Arial, sans-serif; font-size: 18px;">
+              <table style="width: 100%; border-collapse: collapse; border: 1px solid black;">
+                <tr>
+                  <td style="padding: 8px; border: 1px solid black; width: 50%; text-align: center;">
+                    <strong>Student Name : ${student.studentName || ''}</strong>
+                  </td>
+                  <td style="padding: 8px; border: 1px solid black; width: 50%; text-align: center;">
+                    <strong>Student Id : ${student.usid || ''}</strong>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px; border: 1px solid black; text-align: center;">
+                    <strong>Gender : ${student.gender || ''}</strong>
+                  </td>
+                  <td style="padding: 8px; border: 1px solid black; text-align: center;">
+                    <strong>Grade & Sec : ${student.class || ''}${student.section ? '-' + student.section : ''}</strong>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px; border: 1px solid black; text-align: center;">
+                    <strong>House : ${student.house || ''}</strong>
+                  </td>
+                  <td style="padding: 8px; border: 1px solid black; text-align: center;">
+                    <strong>Order Id : ${order.id}</strong>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px; border: 1px solid black; text-align: center;">
+                    <strong>Bundle Quantity : ${item.quantity || '1'}</strong>
+                  </td>
+                  <td style="padding: 8px; border: 1px solid black; text-align: center;">
+                    <strong>Mode of Delivery : ${order.shippingMethod || 'School'}</strong>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px; border: 1px solid black; text-align: center;">
+                    <strong>Billing Address : ${student.address || ''}, ${order?.parent?.phoneNumber || ''}</strong>
+                  </td>
+                  <td style="padding: 8px; border: 1px solid black; text-align: center;">
+                    <strong>Delivery Address : ${order.deliveryAddress ? `${order.deliveryAddress}, ${order?.parent?.phoneNumber || ''}` : '-'}</strong>
+                  </td>
+                </tr>
+              </table>
+              
+              <table style="width: 100%; border-collapse: collapse; border: 1px solid black; margin-top: 5px;">
+                <tr style="background-color: yellow;">
+                  <th style="padding: 8px; border: 1px solid black; width: 60%; text-align: center;">Product</th>
+                  <th style="padding: 8px; border: 1px solid black; width: 20%; text-align: center;">Size</th>
+                  <th style="padding: 8px; border: 1px solid black; width: 20%; text-align: center;">Quantity</th>
+                </tr>
+                ${productRowsHtml}
+              </table>
+            </div>
+          `;
         
         try {
+          if (student.usid) {
+            const barcodeElement = tempDiv.querySelector(`#barcode-${itemIndex}`);
+            if (barcodeElement) {
+              JsBarcode(barcodeElement, student.usid, {
+                format: "CODE39",
+                width: 3,
+                height: 50,
+                displayValue: false,
+                margin: 10,
+                background: "#FFFFFF"
+              });
+            }
+          }
+          
           // Convert HTML to canvas
           const canvas = await html2canvas(tempDiv, {
             scale: 2,

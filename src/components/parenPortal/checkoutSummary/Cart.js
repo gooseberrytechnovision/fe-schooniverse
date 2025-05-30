@@ -147,33 +147,10 @@ const CartPage = () => {
                         <strong>House:</strong>{" "}
                         {item.student?.house || "-"}
                       </p>
-                      <div className="d-flex align-items-center gap-2">
-                        <button
-                          className="btn btn-sm btn-outline-primary px-3"
-                          onClick={() =>
-                            handleQuantityChange(
-                              item.bundleId,
-                              item.quantity - 1,
-                              item.student
-                            )
-                          }
-                        >
-                          -
-                        </button>
-                        <span className="mx-2 fw-bold">{item.quantity}</span>
-                        <button
-                          className="btn btn-sm btn-outline-primary px-3"
-                          onClick={() =>
-                            handleQuantityChange(
-                              item.bundleId,
-                              item.quantity + 1,
-                              item.student
-                            )
-                          }
-                        >
-                          +
-                        </button>
-                      </div>
+                      <p className="small mb-2">
+                        <strong>Bundle Quantity:</strong>{" "}
+                        1
+                      </p>
                     </div>
                   </div>
                   <div className="col-md-3 text-end pe-3">
