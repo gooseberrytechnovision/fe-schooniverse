@@ -381,7 +381,7 @@ const OrderManagement = ({ isVendor = false }) => {
                     <strong>Bundle Quantity : ${item.quantity || '1'}</strong>
                   </td>
                   <td style="padding: 8px; border: 1px solid black; text-align: center;">
-                    <strong>Mode of Delivery : ${order.shippingMethod || 'School'}</strong>
+                    <strong>Mode of Delivery : ${order.shippingMethod || ''}</strong>
                   </td>
                 </tr>
                 <tr>
@@ -389,7 +389,7 @@ const OrderManagement = ({ isVendor = false }) => {
                     <strong>Billing Address : ${student.address || ''}, ${order?.parent?.phoneNumber || ''}</strong>
                   </td>
                   <td style="padding: 8px; border: 1px solid black; text-align: center;">
-                    <strong>Delivery Address : ${order.deliveryAddress ? `${order.deliveryAddress}, ${order?.parent?.phoneNumber || ''}` : '-'}</strong>
+                    <strong>Delivery Address : ${order.deliveryAddress ? `${order.deliveryAddress}, ${order?.parent?.phoneNumber || ''}` : ''}</strong>
                   </td>
                 </tr>
               </table>
