@@ -418,7 +418,7 @@ const StudentManagement = () => {
           } else {
             // Transform data to match API format
             const apiStudentData = {
-              usid: studentData['USID'].replace(/['"]/g, '') || '',
+              usid: studentData['USID']?.toString()?.replace(/['"]/g, '') || '',
               studentName: studentData['Student Name'] || '',
               studentType: studentData['Student Type'] || '',
               admissionYear: studentData['Admission Year'] || '',

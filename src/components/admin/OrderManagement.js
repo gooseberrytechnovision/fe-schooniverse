@@ -198,7 +198,7 @@ const OrderManagement = ({ isVendor = false }) => {
 
                 rows.push([
                   counter++,
-                  student.usid || '',
+                  student.usid ? `="${student.usid}"` : '',
                   student.studentName || '',
                   order.parent?.parentName || '',
                   student.gender || '',
