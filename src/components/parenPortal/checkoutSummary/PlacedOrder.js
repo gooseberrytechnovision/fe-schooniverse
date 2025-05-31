@@ -298,7 +298,6 @@ const PlaceOrder = () => {
             </p>
             <hr />
             <div className="fs-5 shipping-title">Shipping details</div>
-            <p className=" mb-1">{user?.parentName}</p>
             {/* Shipping Preference Box */}
             {cartData?.items?.length > 0 && (
               <>
@@ -317,20 +316,6 @@ const PlaceOrder = () => {
                     htmlFor="pickupFromSchool"
                   >
                     Pick Up from School (No Charges)
-                  </label>
-                </div>
-                <div className="form-check mt-2">
-                  <input
-                    className="form-check-input"
-                    type="radio"
-                    name="shippingMethod"
-                    id="homeDelivery"
-                    value="home"
-                    checked={shippingMethod === "home"}
-                    onChange={(e) => setShippingMethod(e.target.value)}
-                  />
-                  <label className="form-check-label" htmlFor="homeDelivery">
-                    Home Delivery (₹{SHIPPING_CHARGES})
                   </label>
                 </div>
                 
