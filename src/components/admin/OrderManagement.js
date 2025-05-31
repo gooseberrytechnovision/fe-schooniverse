@@ -33,7 +33,11 @@ const OrderManagement = ({ isVendor = false }) => {
       setLoading(true);
       try {
         const response = await fetchAllOrders();
-        setOrders(Array.isArray(response) ? response : []);
+        let ordersArray = Array.isArray(response) ? response : [];
+        if(isVendor){
+          ordersArray = ordersArray.filter(order => order.transactionStatus === "PAID");
+        }
+        setOrders(ordersArray);
       } catch (error) {
         setOrders([]);
       } finally {
@@ -495,12 +499,20 @@ const OrderManagement = ({ isVendor = false }) => {
             onChange={(e) => setStatusFilter(e.target.value)}
           >
             <option value="">All</option>
-            <option value="FAILED">Failed</option>
-            <option value="PAID">Paid</option>
-            <option value="PROCESSING">Processing</option>
-            <option value="SHIPPED">Shipped</option>
-            <option value="DELIVERED">Delivered</option>
-            <option value="CANCELLED">Cancelled</option>
+            {
+              isVendor ? (
+                <>
+                  <option value="IN_PROGRESS">Processing</option>
+                  <option value="SHIPPED">Shipped</option>
+                  <option value="DELIVERED">Delivered</option>
+                </>
+              ) : (
+                <>
+                  <option value="FAILED">Failed</option>
+                  <option value="PAID">Paid</option>
+                </>
+              )
+            }
           </Form.Select>
         </div>
       </div>
