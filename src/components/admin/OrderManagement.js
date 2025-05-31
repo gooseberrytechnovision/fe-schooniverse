@@ -682,9 +682,9 @@ const OrderManagement = ({ isVendor = false }) => {
               </p>
               <p>
                 <strong>Transaction Timestamp:</strong>{" "}
-                {selectedOrder.payments[0]?.raw?.transaction_timestamp
+                {selectedOrder.updatedAt
                   ? new Date(
-                    selectedOrder.payments[0]?.raw?.transaction_timestamp
+                    selectedOrder.updatedAt
                   ).toLocaleString("en-IN", {
                     year: "numeric",
                     month: "long",

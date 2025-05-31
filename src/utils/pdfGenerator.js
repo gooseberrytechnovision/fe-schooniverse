@@ -117,7 +117,7 @@ const createReceiptHTML = (cartItem, paymentData) => {
               <strong>Transaction Date</strong>
             </td>
             <td style="padding: 8px 0; font-size: 14px; width: 25%;">
-              : ${formatDate(paymentData.raw?.transaction_timestamp)}
+              : ${formatDate(paymentData.updatedAt)}
             </td>
             <td style="padding: 8px 0; font-size: 14px; width: 25%;">
               <strong>Receipt No.</strong>
@@ -260,7 +260,7 @@ const createReceiptHTML = (cartItem, paymentData) => {
                   padding: 10px; 
                   text-align: center; 
                   font-size: 12px;
-                ">${product.size || '-'}</td>
+                ">${product?.size?.size || '-'}</td>
                 <td style="
                   border: 1px solid black; 
                   padding: 10px; 
