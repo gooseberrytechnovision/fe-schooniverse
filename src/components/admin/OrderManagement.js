@@ -111,7 +111,7 @@ const OrderManagement = ({ isVendor = false }) => {
           order.id === selectedOrder.id
             ? isVendor
               ? { ...order, status: newStatus, trackingId: barcode }
-              : { ...order, transactionStatus: newStatus }
+              : { ...order, transactionStatus: newStatus, payments: [{...order.payments[0], status: newStatus, applicationCode: applicationCode}] }
             : order
         )
       );
