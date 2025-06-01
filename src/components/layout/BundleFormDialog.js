@@ -191,7 +191,7 @@ const BundleFormDialog = ({ data, onSave, onCancel, header }) => {
     >
       <div className="modal-dialog modal-lg" role="document">
         <div className="modal-content">
-          <div className="modal-header">
+          <div className="modal-header justify-content-between">
             <h5 className="modal-title">
               {header || "Bundle Form"}
             </h5>

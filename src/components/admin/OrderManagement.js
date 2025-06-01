@@ -25,6 +25,7 @@ const OrderManagement = ({ isVendor = false }) => {
   const [endDate, setEndDate] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [barcode, setBarcode] = useState("");
+  const [applicationCode, setApplicationCode] = useState("");
   const barcodeInputRef = React.useRef(null);
   const itemsPerPage = 10;
 
@@ -92,6 +93,7 @@ const OrderManagement = ({ isVendor = false }) => {
     setSelectedOrder(order);
     setNewStatus(order.status); // Set initial status
     setBarcode(order.trackingId || "");
+    setApplicationCode(order.payments[0]?.applicationCode || "");
     setShowModal(true);
   };
 
@@ -102,7 +104,7 @@ const OrderManagement = ({ isVendor = false }) => {
       if (isVendor) {
         await updateOrderStatus(selectedOrder.id, {status: newStatus, trackingId: barcode});
       } else {
-        await updateTransactionStatus(selectedOrder.id, newStatus);
+        await updateTransactionStatus(selectedOrder.id, newStatus, applicationCode);
       }
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
@@ -602,6 +604,7 @@ const OrderManagement = ({ isVendor = false }) => {
       <Modal show={showModal} onHide={() => {
         setShowModal(false);
         setBarcode("");
+        setApplicationCode("");
       }}>
         <Modal.Header closeButton>
           <Modal.Title>Order Details</Modal.Title>
@@ -717,6 +720,20 @@ const OrderManagement = ({ isVendor = false }) => {
                   </>
                 )}
               </Form.Select>
+
+              {!isVendor && (
+                <div className="mt-3">
+                  <h5>Application Code</h5>
+                  <Form.Control
+                    type="text"
+                    placeholder="Enter application code"
+                    value={applicationCode}
+                    onChange={(e) => setApplicationCode(e.target.value)}
+                    maxLength={50}
+                    className="mb-3"
+                  />
+                </div>
+              )}
 
               <div className="mt-3">
                 <h5>Scan Barcode</h5>
