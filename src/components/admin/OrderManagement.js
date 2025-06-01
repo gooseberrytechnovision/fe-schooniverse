@@ -219,8 +219,8 @@ const OrderManagement = ({ isVendor = false }) => {
                   order.transactionStatus || '',
                   new Date(order.updatedAt).toLocaleDateString() || '',
                   order.shippingMethod || '',
-                  student?.address || '',
-                  order?.deliveryAddress || '',
+                  student?.address?.replace("\n", ', ') || '',
+                  order?.deliveryAddress?.replace("\n", ', ') || '',
                   order?.isAddressEdited ? 'Yes' : 'No'
                 ]);
               }
