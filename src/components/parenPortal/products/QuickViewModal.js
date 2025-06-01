@@ -94,8 +94,6 @@ const QuickViewModal = ({ bundle, onClose, onAddToCart, showAction, user, onSize
         delete newState[productId];
         return newState;
       });
-
-      toast.success("Size updated successfully", { position: "top-right" });
     } catch (error) {
       setProductSizes(prev => ({ ...prev, [productId]: '' }));
       toast.error("Failed to update size", { position: "top-right" });
