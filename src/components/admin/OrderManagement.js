@@ -91,7 +91,7 @@ const OrderManagement = ({ isVendor = false }) => {
 
   const onView = (order) => {
     setSelectedOrder(order);
-    setNewStatus(order.status); // Set initial status
+    setNewStatus(isVendor ? order.status : order.transactionStatus);
     setBarcode(order.trackingId || "");
     setApplicationCode(order.payments[0]?.applicationCode || "");
     setShowModal(true);
