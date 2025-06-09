@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
-import { KeyRound, UserRound, ArrowRight, ArrowLeft } from "lucide-react";
+import { KeyRound, UserRound, Lock, ArrowRight, ArrowLeft } from "lucide-react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./ParentLogin.css";
-import { loadingChange, sendOTP, verifyOTP } from "../../actions/auth";
+import { loadingChange, login, sendOTP, verifyOTP } from "../../actions/auth";
 import { useDispatch, useSelector } from "react-redux";
 import { Navigate } from "react-router-dom";
 import FullPageSpinner from "../layout/FullPageSpinner";
@@ -17,6 +17,7 @@ const ParentLogin = () => {
   const [userId, setUserId] = useState("");
   const [authMethod, setAuthMethod] = useState("select");
   const [otp, setOtp] = useState("");
+  const [password, setPassword] = useState("");
   const [otpLoading, setOtpLoading] = useState(false);
 
   const { isAuthenticated } = useSelector((state) => state.auth);
@@ -32,6 +33,18 @@ const ParentLogin = () => {
       dispatch(verifyOTP({ usid: userId, otp: otp }));
     } else {
       toast.error("Please enter OTP.", {
+        position: "top-right",
+      });
+    }
+  };
+
+  const handlePasswordSubmit = (e) => {
+    e.preventDefault();
+    dispatch(loadingChange(true));
+    if (password.length) {
+      dispatch(login({ username: userId, password: password }));
+    } else {
+      toast.error("Invalid password. Please try again.", {
         position: "top-right",
       });
     }
@@ -97,10 +110,19 @@ const ParentLogin = () => {
                       <button
                         type="button"
                         onClick={() => triggerOTP()}
-                        className="btn btn-primary w-100"
+                        className="btn btn-primary w-100 mb-3"
                         disabled={!userId}
                       >
                         <KeyRound size={20} className="me-2" /> Login with OTP
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => userId && setAuthMethod("password")}
+                        className="btn btn-outline-primary w-100"
+                        disabled={!userId}
+                      >
+                        <Lock size={20} className="me-2" /> Login with
+                        Password
                       </button>
                     </div>
                   </>
@@ -138,6 +160,36 @@ const ParentLogin = () => {
                   </button>
                 </form>
               )}
+
+              {authMethod === "password" && (
+                <form onSubmit={handlePasswordSubmit}>
+                  <div className="mb-4">
+                    <div className="input-icon-wrapper">
+                      <Lock className="input-icon" size={20} />
+                      <input
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="form-control input-with-icon"
+                        placeholder="Enter Password"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <button type="submit" className="btn btn-primary w-100 mb-3">
+                    <ArrowRight size={20} className="me-2" /> Login
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAuthMethod("select")}
+                    className="btn btn-outline-primary w-100"
+                  >
+                    <ArrowLeft size={20} className="me-2" /> Back
+                  </button>
+                </form>
+              )}
+
             </div>
           </div>
         </div>

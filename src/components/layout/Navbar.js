@@ -51,7 +51,7 @@ const Navbar = () => {
       case ROLES.PARENT:
         return [
           { path: "/dashboard", label: "Home" },
-          // { path: "/profile", label: "Profile" },
+          { path: "/profile", label: "Profile" },
           { path: "/children", label: "My Children" },
           { path: "/products", label: "Buy" },
           { path: "/order/history", label: "My Orders" },
