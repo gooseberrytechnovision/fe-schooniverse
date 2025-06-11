@@ -49,7 +49,7 @@ const ProfilePage = () => {
   const openDialog = () => {
     if (!user || typeof user !== "object") return [];
 
-    const nonEditableFields = ["role", "campus"];
+    const nonEditableFields = ["role"];
     const skipKeys = [
       "id",
       "students",
@@ -61,6 +61,7 @@ const ProfilePage = () => {
       "otpExpiresAt",
       "isOtpVerified",
       "imageUrl",
+      "campus"
     ];
 
     let result = transform(user, skipKeys, nonEditableFields);
@@ -145,12 +146,12 @@ const ProfilePage = () => {
           <TelephoneFill className="icon" /> <strong>Mobile:</strong>{" "}
           <span>{user.phoneNumber}</span>
         </div>
+        <div className="profile-row">
+          <Mail className="icon" /> <strong>Email:</strong>{" "}
+          <span>{user.email}</span>
+        </div>
         {user.role === ROLES.PARENT && (
           <>
-            <div className="profile-row">
-              <Building className="icon" /> <strong>Campus:</strong>{" "}
-              <span>{user.campus}</span>
-            </div>
             <div className="profile-row">
               <GeoAltFill className="icon" /> <strong>Address:</strong>{" "}
               <span>{user.address}</span>
@@ -168,12 +169,12 @@ const ProfilePage = () => {
       </div>
 
       <div className="text-center mt-4 mx-auto">
-        <button
+        {/* <button
           className="btn btn-primary update-btn w-100"
           onClick={openDialog}
         >
           Update
-        </button>
+        </button> */}
         <button
           className="btn btn-primary update-btn w-100"
           onClick={() => navigate("/reset-password")}
