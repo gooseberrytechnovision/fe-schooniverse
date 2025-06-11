@@ -7,6 +7,7 @@ import {
   LOADING_CHANGE,
   USER_UPDATED,
   USER_UPDATE_FAILED,
+  LOGIN_WITH_DEFAULT_PASSWORD
 } from "../actions/types";
 
 const initialState = {
@@ -14,6 +15,7 @@ const initialState = {
   isAuthenticated: null,
   loading: true,
   user: null,
+  isFirstTimeLogin: false
 };
 
 export default function (state = initialState, action) {
@@ -32,7 +34,16 @@ export default function (state = initialState, action) {
         ...state,
         token: payload.token,
         isAuthenticated: true,
+        isFirstTimeLogin: false,
         loading: false,
+      };
+    case LOGIN_WITH_DEFAULT_PASSWORD:
+      return {
+        ...state,
+        isAuthenticated: true,
+        loading: false,
+        isFirstTimeLogin: payload.data.isFirstTimeLogin,
+        user: { role: "parent", id: payload.data.parentId },
       };
     case LOGIN_FAIL:
     case AUTH_ERROR:
@@ -42,6 +53,7 @@ export default function (state = initialState, action) {
         ...state,
         token: null,
         isAuthenticated: false,
+        isFirstTimeLogin: false,
         loading: false,
         user: {},
       };

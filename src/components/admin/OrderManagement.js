@@ -21,6 +21,7 @@ const OrderManagement = ({ isVendor = false }) => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [newStatus, setNewStatus] = useState("");
+  const [settlementStatus, setSettlementStatus] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -92,6 +93,7 @@ const OrderManagement = ({ isVendor = false }) => {
   const onView = (order) => {
     setSelectedOrder(order);
     setNewStatus(isVendor ? order.status : order.transactionStatus);
+    setSettlementStatus(order.settlement_status);
     setBarcode(order.trackingId || "");
     setApplicationCode(order.payments[0]?.applicationCode || "");
     setShowModal(true);
@@ -104,14 +106,14 @@ const OrderManagement = ({ isVendor = false }) => {
       if (isVendor) {
         await updateOrderStatus(selectedOrder.id, {status: newStatus, trackingId: barcode});
       } else {
-        await updateTransactionStatus(selectedOrder.id, newStatus, applicationCode);
+        await updateTransactionStatus(selectedOrder.id, newStatus, settlementStatus, applicationCode);
       }
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
           order.id === selectedOrder.id
             ? isVendor
               ? { ...order, status: newStatus, trackingId: barcode }
-              : { ...order, transactionStatus: newStatus, payments: [{...order.payments[0], status: newStatus, applicationCode: applicationCode}] }
+              : { ...order, transactionStatus: newStatus, payments: [{...order.payments[0], status: newStatus, applicationCode: applicationCode}], settlement_status: settlementStatus }
             : order
         )
       );
@@ -146,6 +148,7 @@ const OrderManagement = ({ isVendor = false }) => {
         "Bundle Quantity",
         "Total Price",
         "Transaction Status",
+        "Settlement Status",
         "Order Date",
         "Mode of Delivery",
         "Billing Address",
@@ -217,6 +220,7 @@ const OrderManagement = ({ isVendor = false }) => {
                   item.quantity || '',
                   order.totalPrice || '',
                   order.transactionStatus || '',
+                  order.settlement_status || '',
                   new Date(order.updatedAt).toLocaleDateString() || '',
                   order.shippingMethod || '',
                   student?.address?.replace("\n", ', ') || '',
@@ -535,6 +539,7 @@ const OrderManagement = ({ isVendor = false }) => {
               <th>Contact Number</th>
               <th>Total Price</th>
               <th>{isVendor ? "Delivery Status" : "Transaction Status"}</th>
+              {!isVendor && <th>Settlement Status</th>}
               <th>Order Date</th>
               <th>Mode of Delivery</th>
               <th>Actions</th>
@@ -550,6 +555,7 @@ const OrderManagement = ({ isVendor = false }) => {
                   <td>{order.parent?.phoneNumber}</td>
                   <td>{order.totalPrice}</td>
                   <td className="text-capitalize">{isVendor ? order.status : order.transactionStatus}</td>
+                  {!isVendor && <td>{order.settlement_status}</td>}
                   <td>{new Date(order.createdAt).toLocaleDateString()}</td>
                   <td>{order.shippingMethod || '-'}</td>
                   <td className="d-flex justify-content-center">
@@ -684,6 +690,9 @@ const OrderManagement = ({ isVendor = false }) => {
                 <strong>Status:</strong> {selectedOrder.payments[0]?.status}
               </p>
               <p>
+                <strong>Settlement Status:</strong> {selectedOrder.settlement_status}
+              </p>
+              <p>
                 <strong>Transaction Timestamp:</strong>{" "}
                 {selectedOrder.updatedAt
                   ? new Date(
@@ -720,6 +729,19 @@ const OrderManagement = ({ isVendor = false }) => {
                   </>
                 )}
               </Form.Select>
+
+              {!isVendor && (<>
+                <h5>Update Settlement Status</h5>
+                <Form.Select
+                  value={settlementStatus}
+                  onChange={(e) => setSettlementStatus(e.target.value)}
+                  className="mb-3"
+                >
+                  <option value="PENDING">Pending</option>
+                  <option value="SETTLED">Settled</option>
+                  <option value="FAILED">Failed</option>
+                </Form.Select>
+              </>)}
 
               {!isVendor && (
                 <div className="mt-3">

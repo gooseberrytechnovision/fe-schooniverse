@@ -8,6 +8,7 @@ import {
   USER_UPDATED,
   USER_UPDATE_FAILED,
   CLEAR_PRODUCT,
+  LOGIN_WITH_DEFAULT_PASSWORD
 } from "./types";
 import { get, post, put } from "../services/api";
 import { toast } from "react-toastify";
@@ -49,11 +50,11 @@ export const login =
         password: password,
       });
       dispatch({
-        type: LOGIN_SUCCESS,
+        type: res?.data.isFirstTimeLogin ? LOGIN_WITH_DEFAULT_PASSWORD : LOGIN_SUCCESS,
         payload: res,
       });
 
-      dispatch(loadUser());
+      if(res && !res.data.isFirstTimeLogin) dispatch(loadUser());
     } catch (err) {
       dispatch({
         type: LOGIN_FAIL,
@@ -77,6 +78,35 @@ export const updateProfile = (data) => async (dispatch) => {
   } catch (error) {
     dispatch({ type: USER_UPDATE_FAILED, payload: error });
     toast.error("Error while updating profile details!", {
+      position: "top-right",
+    });
+  }
+};
+
+export const updateParent = async (data, isPasswordReset = false) => {
+  try {
+    const res = await put(`/profiles/${data?.id}?role=${data?.role}`, data);
+    if (res) {
+      if (isPasswordReset) {
+        toast.success("Password reset successfully! Login again to continue", { position: "top-right" });
+      }
+      else {
+        toast.success("Parent details updated successfully!", { position: "top-right" });
+      }
+    }
+    else {
+      if (isPasswordReset) {
+        toast.error("Error while resetting password!", { position: "top-right" });
+      }
+      else {
+      toast.error("Error while updating parent details!", {
+          position: "top-right",
+        });
+      }
+    }
+    return res;
+  } catch (error) {
+    toast.error("Error while updating parent details!", {
       position: "top-right",
     });
   }

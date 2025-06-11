@@ -5,9 +5,11 @@ import {
   fetchALLStudent,
   updateStudentDetail,
   bulkCreateStudents,
+  getParentByStudentUsid,
 } from "../../actions/student";
 import FullPageSpinner from "../layout/FullPageSpinner";
 import PopupDialog from "../layout/PopupDialog";
+import ParentEditDialog from "../layout/parentEditDialog";
 import { reverseTransform, transform } from "../../services/helper";
 import ConfirmModal from "../layout/ConfirmModal";
 import { toast } from "react-toastify";
@@ -21,6 +23,7 @@ import {
   studentTypeList,
 } from "../../utils/constants";
 import { utils, read, write } from "xlsx";
+import { updateParent } from "../../actions/auth";
 
 const StudentManagement = () => {
   const [students, setStudents] = useState([]);
@@ -207,6 +210,34 @@ const StudentManagement = () => {
     setShowPopup(true);
   };
 
+  const onEditParentClick = async (data) => {
+    try {
+      setLoading(true);
+      const parentInfo = await getParentByStudentUsid(data.usid);
+      setLoading(false);
+      const nonEditableFields = ["usid", "parentName", "parentId", "role"];
+      const skipKeys = ["id"];
+
+      setSelectedId(-1);
+
+      const studentData = {
+        parentId: parentInfo.id.toString(),
+        parentName: parentInfo.parentName,
+        phoneNumber: parentInfo.phoneNumber,
+        email: parentInfo.email,
+        password: '',
+        role: parentInfo.role,
+      };
+
+      const result = transform(studentData, skipKeys, nonEditableFields);
+      setSelectedRow(result);
+      setShowPopup(true);
+    } catch (error) {
+      console.error("Error in edit student process:", error);
+      toast.error("Failed to load student information", { position: "top-right" });
+    }
+  };
+
   const handleSave = async (updatedData) => {
     try {
       setLoading(true);
@@ -232,6 +263,40 @@ const StudentManagement = () => {
     } catch (error) {
       setSelectedId(null);
     } finally {
+      setSelectedRow({});
+      setShowPopup(false);
+      setLoading(false);
+    }
+  };
+
+  const handleParentSave = async (updatedData) => {
+    try {
+      setLoading(true);
+      const apiBody = reverseTransform(updatedData);
+        const parentId = apiBody.parentId;
+        if (!parentId) {
+          toast.error("Parent ID not found", { position: "top-right" });
+          return;
+        }
+        
+        const parentData = {
+          id: Number(parentId),
+          parentName: apiBody.parentName,
+          phoneNumber: apiBody.phoneNumber,
+          email: apiBody.email,
+          role: apiBody.role || 'parent'
+        };
+        
+        // Only include password if it was changed
+        if (apiBody.password && apiBody.password.trim() !== '') {
+          parentData.password = apiBody.password;
+        }
+        
+        await updateParent(parentData);
+    } catch (error) {
+      setSelectedId(null);
+    } finally {
+      setSelectedRow({});
       setShowPopup(false);
       setLoading(false);
     }
@@ -454,9 +519,9 @@ const StudentManagement = () => {
           const bulkData = {
             students: validStudents
           };
-          
+
           const response = await bulkCreateStudents(bulkData);
-          
+
           // Extract detailed errors from response
           const apiErrors = [];
           if (response.results && Array.isArray(response.results)) {
@@ -477,7 +542,7 @@ const StudentManagement = () => {
               setStudents(updatedStudents);
             }
           }
-          
+
           // Show all errors, including API errors
           setUploadStatus({
             show: true,
@@ -532,14 +597,14 @@ const StudentManagement = () => {
         >
           Download Template
         </button>
-      <button
+        <button
           className="btn btn-success"
-        onClick={() => {
-          addStudentClick();
-        }}
-      >
-        Add Student
-      </button>
+          onClick={() => {
+            addStudentClick();
+          }}
+        >
+          Add Student
+        </button>
       </div>
 
       {uploadStatus.show && (
@@ -559,8 +624,8 @@ const StudentManagement = () => {
               </div>
             </>
           )}
-          <button 
-            className="btn btn-sm btn-secondary mt-2" 
+          <button
+            className="btn btn-sm btn-secondary mt-2"
             onClick={() => setUploadStatus({ ...uploadStatus, show: false })}
           >
             Dismiss
@@ -607,6 +672,12 @@ const StudentManagement = () => {
                         <i className="bi bi-pencil"></i>
                       </button>
                       <button
+                        className="btn btn-success btn-sm"
+                        onClick={() => onEditParentClick(student)}
+                      >
+                        <i className="bi bi-people"></i>
+                      </button>
+                      <button
                         className="btn btn-danger btn-sm"
                         onClick={() => onDeleteClick(student.id)}
                       >
@@ -648,12 +719,21 @@ const StudentManagement = () => {
         </button>
       </div>
       {showPopup && (
-        <PopupDialog
-          data={selectedRow}
-          onSave={handleSave}
-          onCancel={() => setShowPopup(false)}
-          header={"Edit Student"}
-        />
+        selectedId === -1 ? (
+          <ParentEditDialog
+            data={selectedRow}
+            onSave={handleParentSave}
+            onCancel={() => setShowPopup(false)}
+            header={"Edit Parent Information"}
+          />
+        ) : (
+          <PopupDialog
+            data={selectedRow}
+            onSave={handleSave}
+            onCancel={() => setShowPopup(false)}
+            header={selectedId ? "Edit Student" : "Add Student"}
+          />
+        )
       )}
       <ConfirmModal
         show={showConfirm}

@@ -18,6 +18,7 @@ import { ROLES, SUPORT_ATTACHMENT_URL } from "../../utils/constants";
 import { Mail } from "lucide-react";
 import { updateAdminVendor } from "../../actions/admin";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const ProfilePage = () => {
   const { user, loading } = useSelector((state) => state.auth);
@@ -29,6 +30,7 @@ const ProfilePage = () => {
   );
   const fileInputRef = useRef(null);
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const handleSave = async (updatedData) => {
     setInternalLoading(true);
@@ -64,12 +66,6 @@ const ProfilePage = () => {
     let result = transform(user, skipKeys, nonEditableFields);
     result = [
       ...result,
-      {
-        label: "Password",
-        value: "",
-        editable: true,
-        options: null,
-      },
     ];
     setFormData(result);
     setShowPopup(true);
@@ -177,6 +173,12 @@ const ProfilePage = () => {
           onClick={openDialog}
         >
           Update
+        </button>
+        <button
+          className="btn btn-primary update-btn w-100"
+          onClick={() => navigate("/reset-password")}
+        >
+          Reset Password
         </button>
       </div>
       {showPopup && (

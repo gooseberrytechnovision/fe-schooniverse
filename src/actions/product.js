@@ -234,9 +234,9 @@ export const updateOrderStatus = async (id, data) => {
   }
 };
 
-export const updateTransactionStatus = async (id, status, application_code) => {
+export const updateTransactionStatus = async (id, status, settlement_status, application_code) => {
   try {
-    const res = await patch(`/orders/${id}/transaction-status`, { status, application_code });
+    const res = await patch(`/orders/${id}/transaction-status`, { status, settlement_status, application_code });
     return res.data;
   } catch (error) {
     toast.error(error.message, { position: "top-right" });

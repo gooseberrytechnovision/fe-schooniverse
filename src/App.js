@@ -34,6 +34,7 @@ import FullPageSpinner from "./components/layout/FullPageSpinner";
 import SupportQueries from "./components/admin/SupportQueries";
 import AdminLogin from "./components/auth/AdminLogin";
 import AdminManagement from "./components/admin/AdminManagement";
+import PasswordReset from "./components/auth/PasswordReset";
 
 // Import new pages
 import AboutUs from "./pages/about";
@@ -51,15 +52,16 @@ const ChildrenDetails = lazy(() =>
 );
 
 const Layout = ({ children }) => {
-  const { isAuthenticated, loading } = useSelector((state) => state.auth);
+  const { isAuthenticated, loading, isFirstTimeLogin } = useSelector((state) => state.auth);
+  const showNavAndFooter = !isFirstTimeLogin && isAuthenticated && !loading;
+  
   return (
     <>
       {loading && <FullPageSpinner loading={loading} />}
-      {/* Show Navbar only if not on login page */}
-      {isAuthenticated && !loading && <Navbar />}
+      {/* Show Navbar only if authenticated, not loading, and not on first time login */}
+      {showNavAndFooter && <Navbar />}
       {children}
-      {/* <CheckoutWrapper isAuthenticated={isAuthenticated} /> */}
-      {isAuthenticated && !loading && <Footer />}
+      {showNavAndFooter && <Footer />}
     </>
   );
 };
@@ -86,6 +88,11 @@ const App = () => {
               path="/vendor/login"
               element={<AdminLogin userType={"Vendor"} />}
             />
+
+            {/* Password Reset Route */}
+            <Route element={<PrivateRoute />}>
+              <Route path="/reset-password" element={<PasswordReset />} />
+            </Route>
 
             {/* Public Routes */}
             <Route path="/about" element={<AboutUs />} />

@@ -89,3 +89,14 @@ export const bulkCreateStudents = async (bulkData) => {
     };
   }
 };
+
+export const getParentByStudentUsid = async (usid) => {
+  try {
+    const res = await get(`/parents/student/${usid}`);
+    return res.data;
+  } catch (error) {
+    console.error("Error fetching parent by student USID:", error);
+    toast.error("Error fetching parent information", { position: "top-right" });
+    return null;
+  }
+};

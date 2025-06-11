@@ -2,15 +2,18 @@ import { Navigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 
 const AuthRedirect = () => {
-  const { isAuthenticated, loading } = useSelector((state) => state.auth);
+  const { isAuthenticated, loading, isFirstTimeLogin } = useSelector((state) => state.auth);
 
   if (loading) return null; // Avoid redirecting while authentication is being checked
 
-  return isAuthenticated ? (
-    <Navigate to="/dashboard" />
-  ) : (
-    <Navigate to="/login" />
-  );
+  if (isAuthenticated) {
+    if (isFirstTimeLogin) {
+      return <Navigate to="/reset-password" />;
+    }
+    return <Navigate to="/dashboard" />;
+  }
+  
+  return <Navigate to="/login" />;
 };
 
 export default AuthRedirect;
