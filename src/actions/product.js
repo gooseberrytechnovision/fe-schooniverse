@@ -244,6 +244,16 @@ export const updateTransactionStatus = async (id, status, settlement_status, app
   }
 };
 
+export const bulkUpdateTransactionStatus = async (bulkUpdateData) => {
+  try {
+    const res = await post('/orders/bulk-transaction-status', bulkUpdateData);
+    return res.data;
+  } catch (error) {
+    // Let the component handle the error
+    throw error;
+  }
+};
+
 export const findParentByPhone = async (phoneNumber) => {
   try {
     const res = await post("/parents/find-by-phone", { phoneNumber: phoneNumber });

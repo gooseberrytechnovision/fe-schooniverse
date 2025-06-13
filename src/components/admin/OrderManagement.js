@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import FullPageSpinner from "../layout/FullPageSpinner";
 import { Modal, Button, Form } from "react-bootstrap";
 import {
@@ -6,7 +6,8 @@ import {
   updateOrderStatus,
   updateTransactionStatus,
   getProductsByIds,
-  getSizesInBulk
+  getSizesInBulk,
+  bulkUpdateTransactionStatus
 } from "../../actions/product";
 import { toast } from "react-toastify";
 import jsPDF from "jspdf";
@@ -29,6 +30,12 @@ const OrderManagement = ({ isVendor = false }) => {
   const [applicationCode, setApplicationCode] = useState("");
   const barcodeInputRef = React.useRef(null);
   const itemsPerPage = 10;
+  const [uploadStatus, setUploadStatus] = useState({
+    show: false,
+    success: 0,
+    failed: 0,
+    errors: []
+  });
 
   useEffect(() => {
     const getOrders = async () => {
@@ -462,6 +469,242 @@ const OrderManagement = ({ isVendor = false }) => {
     }
   };
 
+  // Export Orders to Excel (simplified version with specific fields)
+  const exportOrdersToExcel = () => {
+    setLoading(true);
+    
+    try {
+      const headers = [
+        "Order ID",
+        "USID",
+        "Parent Name",
+        "Application Code",
+        "Transaction Status",
+        "Settlement Status"
+      ];
+      
+      let rows = [];
+      
+      filteredOrders.forEach(order => {
+        rows.push([
+          order.id || '',
+          order?.items?.map(item => item.student?.usid).join(',') || '',
+          order?.parent?.parentName || '',
+          order.payments.filter(payment => payment.status === "PAID")[0]?.applicationCode || '',
+          order.transactionStatus || '',
+          order.settlement_status || ''
+        ]);
+      });
+      
+      // Convert data to CSV content
+      let csvContent = headers.join(",") + "\n";
+      rows.forEach(row => {
+        // Escape any commas within fields
+        const escapedRow = row.map(field => {
+          const str = String(field || '');
+          return str.includes(',') ? `"${str}"` : str;
+        });
+        
+        csvContent += escapedRow.join(",") + "\n";
+      });
+      
+      // Use Blob API for better handling of large files
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", "Orders_Export.csv");
+      document.body.appendChild(link);
+      link.click();
+      
+      // Clean up
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }, 100);
+      
+      toast.success("Orders exported successfully");
+    } catch (error) {
+      console.error("Error exporting orders:", error);
+      toast.error("Failed to export orders");
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Handle file upload for bulk updates
+  const fileInputRef = useRef(null);
+  
+  const handleFileUpload = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    setLoading(true);
+    
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        const csv = e.target.result;
+        const lines = csv.split('\n');
+        const headers = lines[0].split(',').map(header => header.trim());
+        
+        // Check if required columns exist
+        const requiredColumns = ['Order ID', 'Transaction Status', 'Settlement Status', 'Application Code'];
+        const missingColumns = requiredColumns.filter(col => !headers.includes(col));
+        
+        if (missingColumns.length > 0) {
+          toast.error(`Missing required columns: ${missingColumns.join(', ')}`);
+          setLoading(false);
+          return;
+        }
+        
+        // Parse data
+        const result = [];
+        const invalidRows = [];
+        
+        for (let i = 1; i < lines.length; i++) {
+          if (lines[i].trim() === '') continue;
+          
+          const values = lines[i].split(',').map(value => value.trim());
+          if (values.length !== headers.length) continue;
+          
+          const obj = {};
+          headers.forEach((header, index) => {
+            obj[header] = values[index];
+          });
+          
+          // Validate Transaction Status and Settlement Status
+          const validTransactionStatus = ['PAID', 'FAILED'];
+          const validSettlementStatus = ['SETTLED', 'PENDING', 'FAILED'];
+          
+          const rowNum = i + 1; // Adding 1 to account for 0-indexing and header row
+          let isValid = true;
+          
+          if (!validTransactionStatus.includes(obj['Transaction Status'])) {
+            invalidRows.push(`Row ${rowNum}: Invalid Transaction Status "${obj['Transaction Status']}"`);
+            isValid = false;
+          }
+          
+          if (!validSettlementStatus.includes(obj['Settlement Status'])) {
+            invalidRows.push(`Row ${rowNum}: Invalid Settlement Status "${obj['Settlement Status']}"`);
+            isValid = false;
+          }
+          
+          if (isValid) {
+            result.push(obj);
+          }
+        }
+        
+        if (invalidRows.length > 0) {
+          // Show first 5 errors with a count of total errors
+          const errorMessage = invalidRows.slice(0, 5);
+          if(invalidRows.length > 5){
+            errorMessage.push(`\n...and ${invalidRows.length - 5} more errors`);
+          }
+          
+          setUploadStatus({
+            show: true,
+            success: 0,
+            failed: invalidRows.length,
+            errors: errorMessage
+          });
+          setLoading(false);
+          return;
+        }
+        
+        if (result.length === 0) {
+          toast.error("No valid data found in the file");
+          setLoading(false);
+          return;
+        }
+        
+        // Process the data immediately
+        try {
+          // Check which columns exist in the CSV headers
+          const hasOrderId = headers.includes('Order ID');
+          const hasTransactionStatus = headers.includes('Transaction Status');
+          const hasSettlementStatus = headers.includes('Settlement Status');
+          const hasApplicationCode = headers.includes('Application Code');
+          
+          // Transform the data to match the API request format
+          const transformedData = {
+            transactions: result.map(item => {
+              // Create transaction object with only the properties for columns that exist in the CSV
+              const transaction = {};
+              
+              if (hasOrderId) {
+                transaction.orderId = item['Order ID'];
+              }
+              
+              if (hasTransactionStatus) {
+                transaction.status = item['Transaction Status'];
+              }
+              
+              if (hasSettlementStatus) {
+                transaction.settlement_status = item['Settlement Status'];
+              }
+              
+              if (hasApplicationCode) {
+                transaction.application_code = item['Application Code'];
+              }
+              
+              return transaction;
+            })
+          };
+          
+          // Call the API
+          const response = await bulkUpdateTransactionStatus(transformedData);
+          
+          // Handle response according to the expected format
+          setUploadStatus({
+            show: true,
+            success: response.successCount || 0,
+            failed: response.failedCount || 0,
+            errors: [response.message]
+          });
+          
+          // Refresh orders list
+          const ordersResponse = await fetchAllOrders();
+          let ordersArray = Array.isArray(ordersResponse) ? ordersResponse : [];
+          if(isVendor){
+            ordersArray = ordersArray.filter(order => order.transactionStatus === "PAID");
+          }
+          setOrders(ordersArray);
+        } catch (error) {
+          console.error("Error updating orders:", error);
+          setUploadStatus({
+            show: true,
+            success: 0,
+            failed: result.length,
+            errors: ["Unknown error occurred during bulk update"]
+          });
+        }
+      } catch (error) {
+        console.error("Error parsing CSV:", error);
+        setUploadStatus({
+          show: true,
+          success: 0,
+          failed: 1,
+          errors: ["Failed to parse CSV file: " + (error.message || "Unknown error")]
+        });
+      } finally {
+        setLoading(false);
+        // Reset file input
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+      }
+    };
+    
+    reader.readAsText(file);
+  };
+  
+  const triggerFileInput = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
   return loading ? (
     <FullPageSpinner loading={loading} />
   ) : (
@@ -523,8 +766,51 @@ const OrderManagement = ({ isVendor = false }) => {
         </div>
       </div>
 
-      {/* Export Button */}
-      <div className="mb-3 float-end">
+      {uploadStatus.show && (
+        <div className={`alert ${uploadStatus.failed > 0 ? 'alert-warning' : 'alert-success'} mt-3`}>
+          <h5>Bulk Update Results</h5>
+          <p>Successfully updated: {uploadStatus.success} orders</p>
+          {uploadStatus.failed > 0 && (
+            <>
+              <p>Failed to update: {uploadStatus.failed} orders</p>
+              <div className="mt-2">
+                <p><strong>Errors:</strong></p>
+                <ul className="error-list" style={{maxHeight: '200px', overflowY: 'auto'}}>
+                  {uploadStatus.errors.map((error, index) => (
+                    <li key={index}>{error}</li>
+                  ))}
+                </ul>
+              </div>
+            </>
+          )}
+          <button
+            className="btn btn-sm btn-secondary mt-2"
+            onClick={() => setUploadStatus({ ...uploadStatus, show: false })}
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {/* Export Buttons */}
+        <div className="mb-3 float-end d-flex">
+          {!isVendor && (
+            <>
+              <input
+                type="file"
+                accept=".csv"
+                ref={fileInputRef}
+                onChange={handleFileUpload}
+                style={{ display: 'none' }}
+              />
+              <Button variant="primary" className="me-2" onClick={triggerFileInput}>
+                Bulk Upload
+              </Button>
+              <Button variant="info" className="me-2" onClick={exportOrdersToExcel}>
+                Export Orders
+              </Button>
+            </>
+          )}
         <Button variant="success" onClick={exportToCSV}>
           Export to CSV
         </Button>
