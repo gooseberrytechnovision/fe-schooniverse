@@ -94,10 +94,14 @@ const Navbar = () => {
     <div className="banner align-items-center justify-content-center text-white">
       <div className="welcome-banner text-white">
         Dear Parent, <br />
-        Welcome! Kindly place your order for The Gaudium School uniforms. We appreciate your continued support and association.
+        Welcome! Kindly place your order for The Gaudium School uniforms. We
+        appreciate your continued support and association.
       </div>
 
-      <nav className="navbar position-fixed top-0 w-full navbar-expand-lg" style={{ zIndex: 99 }}>
+      <nav
+        className="navbar position-fixed top-0 w-full navbar-expand-lg"
+        style={{ zIndex: 99 }}
+      >
         <div className="container-fluid">
           <Link
             className="navbar-brand d-flex align-items-center text-white ms-5"
@@ -720,7 +724,9 @@ const Navbar = () => {
 
       <div className="order-deadline-marquee">
         <marquee behavior="scroll" direction="left" scrollamount="5">
-          <strong>IMPORTANT:</strong> The uniform order must be placed by 30th May 2025 to ensure timely delivery and your child attends school in proper uniform.
+          <strong>IMPORTANT:</strong> The uniform order must be placed by 20th
+          June 2025 to ensure timely delivery and your child attends school
+          in proper uniform.
         </marquee>
       </div>
     </div>
