@@ -13,9 +13,9 @@ import {
 } from "./types";
 import axios from "axios";
 
-export const fetchLinkedBundles = async (usid, type) => {
+export const fetchLinkedBundles = async (usid, type, isIndividualProduct) => {
   try {
-    const res = await get(`/bundles/search/${usid}?type=${type}`);
+    const res = await get(`/bundles/search/${usid}?type=${type}&isIndividualProduct=${isIndividualProduct}`);
     return res.data;
   } catch (error) {
     toast.error(error.message, { position: "top-right" });
@@ -120,6 +120,10 @@ export const orderPlaced =
       // If API returns error inside the response (but HTTP 200 OK)
       if (res.data?.error) {
         throw new Error(res.data.error.message || "Unknown error");
+      }
+
+      if (res.data?.success === false) {
+        throw new Error(res.data?.message || "Unknown error");
       }
 
       dispatch({
@@ -250,6 +254,15 @@ export const bulkUpdateTransactionStatus = async (bulkUpdateData) => {
     return res.data;
   } catch (error) {
     // Let the component handle the error
+    throw error;
+  }
+};
+
+export const bulkUpdateDeliveryStatus = async (bulkUpdateData) => {
+  try {
+    const res = await post('/orders/bulk-delivery-status', bulkUpdateData);
+    return res.data;
+  } catch (error) {
     throw error;
   }
 };

@@ -198,9 +198,9 @@ const PlaceOrder = () => {
             .finally(() => setLoading(false));
         }
       })
-      .catch(() => {
+      .catch((error) => {
         toast.error(
-          "Something went wrong on our end. Please try again later.",
+          error.message || "Something went wrong. Please try again later.",
           { position: "top-right" }
         );
       });
@@ -374,10 +374,10 @@ const PlaceOrder = () => {
             <button
               className="btn btn-primary w-100 mt-3 text-white gq-button"
               onClick={handlePlaceOrder}
-              disabled={!cartData?.items?.length}
+              disabled={!cartData?.items?.length || !user?.settings?.enablePurchasing}
               id="gq-button"
             >
-              🛍️ Place Order
+              {user?.settings?.enablePurchasing ? "🛍️ Place Order" : "🛍️ Place Order is Disabled"}
             </button>
           </div>
         </div>

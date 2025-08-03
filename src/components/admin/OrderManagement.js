@@ -7,7 +7,8 @@ import {
   updateTransactionStatus,
   getProductsByIds,
   getSizesInBulk,
-  bulkUpdateTransactionStatus
+  bulkUpdateTransactionStatus,
+  bulkUpdateDeliveryStatus
 } from "../../actions/product";
 import { toast } from "react-toastify";
 import jsPDF from "jspdf";
@@ -479,9 +480,13 @@ const OrderManagement = ({ isVendor = false }) => {
         "USID",
         "Parent Name",
         "Application Code",
-        "Transaction Status",
-        "Settlement Status"
       ];
+
+      if(isVendor){
+        headers.push("Delivery Status", "Tracking ID");
+      } else {
+        headers.push("Transaction Status", "Settlement Status");
+      }
       
       let rows = [];
       
@@ -491,8 +496,7 @@ const OrderManagement = ({ isVendor = false }) => {
           order?.items?.map(item => item.student?.usid).join(',') || '',
           order?.parent?.parentName || '',
           order.payments.filter(payment => payment.status === "PAID")[0]?.applicationCode || '',
-          order.transactionStatus || '',
-          order.settlement_status || ''
+          ...(isVendor ? [order.status, order.trackingId] || '' : [order.transactionStatus || '', order.settlement_status || ''])
         ]);
       });
       
@@ -549,7 +553,7 @@ const OrderManagement = ({ isVendor = false }) => {
         const headers = lines[0].split(',').map(header => header.trim());
         
         // Check if required columns exist
-        const requiredColumns = ['Order ID', 'Transaction Status', 'Settlement Status', 'Application Code'];
+        const requiredColumns = ['Order ID', 'Application Code', ...(isVendor ? ['Delivery Status', 'Tracking ID'] : ['Transaction Status', 'Settlement Status'])];
         const missingColumns = requiredColumns.filter(col => !headers.includes(col));
         
         if (missingColumns.length > 0) {
@@ -576,18 +580,26 @@ const OrderManagement = ({ isVendor = false }) => {
           // Validate Transaction Status and Settlement Status
           const validTransactionStatus = ['PAID', 'FAILED'];
           const validSettlementStatus = ['SETTLED', 'PENDING', 'FAILED'];
+          const validDeliveryStatus = ['IN_PROGRESS', 'SHIPPED', 'DELIVERED'];
           
           const rowNum = i + 1; // Adding 1 to account for 0-indexing and header row
           let isValid = true;
-          
-          if (!validTransactionStatus.includes(obj['Transaction Status'])) {
-            invalidRows.push(`Row ${rowNum}: Invalid Transaction Status "${obj['Transaction Status']}"`);
-            isValid = false;
-          }
-          
-          if (!validSettlementStatus.includes(obj['Settlement Status'])) {
-            invalidRows.push(`Row ${rowNum}: Invalid Settlement Status "${obj['Settlement Status']}"`);
-            isValid = false;
+
+          if (isVendor) {
+            if (!validDeliveryStatus.includes(obj['Delivery Status'])) {
+              invalidRows.push(`Row ${rowNum}: Invalid Delivery Status "${obj['Delivery Status']}"`);
+              isValid = false;
+            }
+          } else {
+            if (!validTransactionStatus.includes(obj['Transaction Status'])) {
+              invalidRows.push(`Row ${rowNum}: Invalid Transaction Status "${obj['Transaction Status']}"`);
+              isValid = false;
+            }
+
+            if (!validSettlementStatus.includes(obj['Settlement Status'])) {
+              invalidRows.push(`Row ${rowNum}: Invalid Settlement Status "${obj['Settlement Status']}"`);
+              isValid = false;
+            }
           }
           
           if (isValid) {
@@ -625,6 +637,8 @@ const OrderManagement = ({ isVendor = false }) => {
           const hasTransactionStatus = headers.includes('Transaction Status');
           const hasSettlementStatus = headers.includes('Settlement Status');
           const hasApplicationCode = headers.includes('Application Code');
+          const hasDeliveryStatus = headers.includes('Delivery Status');
+          const hasTrackingId = headers.includes('Tracking ID');
           
           // Transform the data to match the API request format
           const transformedData = {
@@ -636,8 +650,8 @@ const OrderManagement = ({ isVendor = false }) => {
                 transaction.orderId = item['Order ID'];
               }
               
-              if (hasTransactionStatus) {
-                transaction.status = item['Transaction Status'];
+              if (hasTransactionStatus || hasDeliveryStatus) {
+                transaction.status = isVendor ? item['Delivery Status'] : item['Transaction Status'];
               }
               
               if (hasSettlementStatus) {
@@ -648,12 +662,16 @@ const OrderManagement = ({ isVendor = false }) => {
                 transaction.application_code = item['Application Code'];
               }
               
+              if (hasTrackingId) {
+                transaction.trackingId = item['Tracking ID'];
+              }
+              
               return transaction;
             })
           };
           
           // Call the API
-          const response = await bulkUpdateTransactionStatus(transformedData);
+          const response = isVendor ? await bulkUpdateDeliveryStatus(transformedData) : await bulkUpdateTransactionStatus(transformedData);
           
           // Handle response according to the expected format
           setUploadStatus({
@@ -794,23 +812,19 @@ const OrderManagement = ({ isVendor = false }) => {
 
       {/* Export Buttons */}
         <div className="mb-3 float-end d-flex">
-          {!isVendor && (
-            <>
-              <input
-                type="file"
-                accept=".csv"
-                ref={fileInputRef}
-                onChange={handleFileUpload}
-                style={{ display: 'none' }}
-              />
-              <Button variant="primary" className="me-2" onClick={triggerFileInput}>
-                Bulk Upload
-              </Button>
-              <Button variant="info" className="me-2" onClick={exportOrdersToExcel}>
-                Export Orders
-              </Button>
-            </>
-          )}
+          <input
+            type="file"
+            accept=".csv"
+            ref={fileInputRef}
+            onChange={handleFileUpload}
+            style={{ display: 'none' }}
+          />
+          <Button variant="primary" className="me-2" onClick={triggerFileInput}>
+            Bulk Upload
+          </Button>
+          <Button variant="info" className="me-2" onClick={exportOrdersToExcel}>
+            Export Orders
+          </Button>
         <Button variant="success" onClick={exportToCSV}>
           Export to CSV
         </Button>

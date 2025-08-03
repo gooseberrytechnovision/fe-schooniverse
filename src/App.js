@@ -35,6 +35,7 @@ import SupportQueries from "./components/admin/SupportQueries";
 import AdminLogin from "./components/auth/AdminLogin";
 import AdminManagement from "./components/admin/AdminManagement";
 import PasswordReset from "./components/auth/PasswordReset";
+import Settings from "./components/admin/Settings";
 
 // Import new pages
 import AboutUs from "./pages/about";
@@ -108,7 +109,8 @@ const App = () => {
             </Route>
 
             <Route element={<PrivateRoute allowedRoles={[ROLES.PARENT]} />}>
-              <Route exact path="/products" element={<ProductListing />} />
+              <Route exact path="/products" element={<ProductListing isBundle={false} />} />
+              <Route exact path="/bundles" element={<ProductListing isBundle={true} />} />
               <Route path="/children" element={<ChildrenDetails />} />
               <Route path="/order/history" element={<OrderHistory />} />
               <Route path="/thankyou/:orderId" element={<ThankYouPage />} />
@@ -122,6 +124,7 @@ const App = () => {
               <Route path="/admin/students" element={<StudentManagement />} />
               <Route path="/admin/orders" element={<OrderManagement />} />
               <Route path="/admin/bundle" element={<BundleManagement />} />
+              <Route path="/admin/settings" element={<Settings />} />
             </Route>
 
             <Route element={<PrivateRoute allowedRoles={[ROLES.VENDOR]} />}>

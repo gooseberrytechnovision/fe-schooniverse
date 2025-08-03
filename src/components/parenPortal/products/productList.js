@@ -6,14 +6,17 @@ import { addToCart, fetchLinkedBundles } from "../../../actions/product";
 import FullPageSpinner from "../../layout/FullPageSpinner";
 import { toast } from "react-toastify";
 import { loadUser } from "../../../actions/auth";
+import { updateProductSize } from "../../../actions/product";
 
-const ProductListing = () => {
+const ProductListing = ({ isBundle = false }) => {
   const { user } = useSelector((state) => state.auth);
   const [bundles, setBundles] = useState([]);
   const [sortOrder, setSortOrder] = useState("default");
   const [search, setSearch] = useState("");
   const [selectedBundle, setSelectedBundle] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [quantities, setQuantities] = useState({});
+  const [selectedSizes, setSelectedSizes] = useState({});
 
   const dispatch = useDispatch();
 
@@ -25,17 +28,36 @@ const ProductListing = () => {
     }
 
     try {
-      const bundleResponses = await Promise.all(
-        user.students.map((id, index) => {
-          let type = user?.studentData[index]?.studentType;
-          return fetchLinkedBundles(id, type);
-        })
-      );
-      const updatedBundles = bundleResponses.flat().map((bundle, index) => ({
-        ...bundle,
-        student: user.studentData[index % user.studentData.length], // Assign student
-      }));
-      setBundles(updatedBundles);
+      if ((isBundle && user?.settings?.enableBulkProducts) || (!isBundle && user?.settings?.enableIndividualProducts)) {
+        const bundleResponses = await Promise.all(
+          user.students.map((id, index) => {
+            let type = user?.studentData[index]?.studentType;
+            return fetchLinkedBundles(id, type, !isBundle);
+          })
+        );
+        const updatedBundles = bundleResponses.flat().map((bundle, index) => ({
+          ...bundle,
+          student: user.studentData[index % user.studentData.length], // Assign student
+        }));
+        setBundles(updatedBundles);
+
+        // Initialize quantities and sizes state for all bundles
+        const initialQuantities = {};
+        const initialSizes = {};
+        updatedBundles.forEach(bundle => {
+          initialQuantities[bundle.bundle_id] = bundle?.products[0]?.quantity || 1;
+
+          // Set default size to the first available size if there are any
+          if (bundle?.products[0]?.availableSizes && bundle.products[0].availableSizes.length > 0) {
+            initialSizes[bundle.bundle_id] = bundle.products[0].availableSizes[0];
+          } else {
+            bundle.products[0].availableSizes = ["Free-NA"];
+            initialSizes[bundle.bundle_id] = "Free-NA";
+          }
+        });
+        setQuantities(initialQuantities);
+        setSelectedSizes(initialSizes);
+      }
     } catch (error) {
       setBundles([]);
     } finally {
@@ -46,8 +68,8 @@ const ProductListing = () => {
   useEffect(() => {
     setLoading(true);
     dispatch(loadUser());
-    getBundles();
-  }, [user.students?.length]);
+    user?.settings?.enablePurchasing ? getBundles() : setLoading(false);
+  }, [user.students?.length, isBundle]);
 
   const handleSortChange = (event) => {
     setSortOrder(event.target.value);
@@ -65,16 +87,44 @@ const ProductListing = () => {
   const handleBundleSizeUpdate = (updatedBundle) => {
     // Update the selected bundle
     setSelectedBundle(updatedBundle);
-    
+
     // Update the bundle in the main list
-    setBundles(prevBundles => 
-      prevBundles.map(bundle => 
+    setBundles(prevBundles =>
+      prevBundles.map(bundle =>
         bundle.bundle_id === updatedBundle.bundle_id ? updatedBundle : bundle
       )
     );
   };
 
+  const handleQuantityChange = (bundleId, value) => {
+    setQuantities(prev => ({
+      ...prev,
+      [bundleId]: value
+    }));
+  };
+
+  const handleSizeChange = (bundle, size) => {
+    setSelectedSizes(prev => ({
+      ...prev,
+      [bundle.bundle_id]: size
+    }));
+  };
+
   const addToCartClick = async (bundleId, quantity, studentId) => {
+    if (!user?.settings?.enablePurchasing) {
+      toast.error("Purchasing is currently disabled by the administrator.", { position: "top-right" });
+      return;
+    }
+    if (!isBundle) {
+      const sizeData = {
+        size: selectedSizes[bundleId],
+        studentId: studentId,
+        productId: filteredBundles.find(b => b.bundle_id === bundleId)?.products[0]?.product_id
+      };
+
+      updateProductSize(sizeData);
+    }
+
     setLoading(true);
     const body = { bundleId, quantity, parentId: user.id, studentId };
 
@@ -94,6 +144,30 @@ const ProductListing = () => {
   const filteredBundles = bundles.filter((bundle) =>
     bundle.bundle_name?.toLowerCase().includes(search?.toLowerCase())
   );
+
+  // Check if purchasing is disabled
+  if (!user?.settings?.enablePurchasing) {
+    return (
+      <div className="container py-5 my-10 text-center">
+        <div className="alert alert-info" role="alert">
+          <h4 className="alert-heading">Purchasing Temporarily Unavailable</h4>
+          <p>Product purchasing is currently disabled by the administrator. Please check back later.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Check if all product types are disabled
+  if (!user?.settings?.enableIndividualProducts && !user?.settings?.enableBulkProducts) {
+    return (
+      <div className="container py-5 my-10 text-center">
+        <div className="alert alert-info" role="alert">
+          <h4 className="alert-heading">Products Temporarily Unavailable</h4>
+          <p>Product purchasing is currently disabled by the administrator. Please check back later.</p>
+        </div>
+      </div>
+    );
+  }
 
   return loading ? (
     <FullPageSpinner loading={loading} />
@@ -138,14 +212,14 @@ const ProductListing = () => {
                       alt={bundle.name}
                       style={{ maxHeight: "350px" }}
                     />
-                    <div className="card-img-overlay d-flex justify-content-center align-items-center">
+                    {isBundle && <div className="card-img-overlay d-flex justify-content-center align-items-center">
                       <button
                         className="btn btn-primary"
                         onClick={() => setSelectedBundle(bundle)}
                       >
                         Quick View
                       </button>
-                    </div>
+                    </div>}
                   </div>
                   <div className="card-body text-center d-flex flex-column">
                     <h5 className="card-title fw-bold">{bundle.bundle_name}</h5>
@@ -160,10 +234,42 @@ const ProductListing = () => {
                       ₹{bundle.bundle_total}
                     </p>
 
+                    {!isBundle && <div className="d-flex justify-content-center mb-3">
+                      <div className="me-3">
+                        <label htmlFor={`quantity-${bundle.bundle_id}`} className="d-block mb-1 text-start">Quantity:</label>
+                        <input
+                          id={`quantity-${bundle.bundle_id}`}
+                          type="number"
+                          className="form-control form-control-sm"
+                          style={{ width: "70px" }}
+                          value={quantities[bundle.bundle_id] || 1}
+                          onChange={(e) => handleQuantityChange(bundle.bundle_id, e.target.value)}
+                          min={bundle?.products[0]?.quantity || 1}
+                        />
+                      </div>
+
+                      {bundle?.products[0]?.availableSizes && bundle.products[0].availableSizes.length > 0 && (
+                        <div>
+                          <label htmlFor={`size-${bundle.bundle_id}`} className="d-block mb-1 text-start">Size:</label>
+                          <select
+                            id={`size-${bundle.bundle_id}`}
+                            className="form-select form-select-sm"
+                            style={{ width: "80px" }}
+                            value={selectedSizes[bundle.bundle_id] || bundle.products[0].availableSizes[0]}
+                            onChange={(e) => handleSizeChange(bundle, e.target.value)}
+                          >
+                            {bundle.products[0].availableSizes.map((size, idx) => (
+                              <option key={idx} value={size}>{size}</option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+                    </div>}
+
                     <button
                       className={`btn ${bundle.isAlreadyPurchased ? "btn-secondary" : "btn-outline-primary"} mt-auto`}
                       onClick={() =>
-                        addToCartClick(bundle.bundle_id, 1, bundle.student.id)
+                        addToCartClick(bundle.bundle_id, isBundle ? 1 : quantities[bundle.bundle_id] || 1, bundle.student.id)
                       }
                       disabled={bundle.isAlreadyPurchased}
                     >

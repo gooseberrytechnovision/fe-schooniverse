@@ -52,10 +52,18 @@ const ProductManagement = () => {
         options: null,
       },
       {
-        label: "Image URL",
+        label: "Size chart URL",
         value: "",
         editable: true,
         options: null,
+        optional: true,
+      },
+      {
+        label: "Available Sizes",
+        value: [],
+        editable: true,
+        options: "Multiple Entry",
+        optional: true,
       },
     ];
     setSelectedId(null);
@@ -78,10 +86,18 @@ const ProductManagement = () => {
         options: null,
       },
       {
-        label: "Image URL",
-        value: product.imageUrl || "",
+        label: "Size chart URL",
+        value: product.sizeChart || "",
         editable: true,
         options: null,
+        optional: true,
+      },
+      {
+        label: "Available Sizes",
+        value: product.availableSizes || [],
+        editable: true,
+        options: "Multiple Entry",
+        optional: true,
       },
     ];
     setSelectedId(product.id);
@@ -114,7 +130,8 @@ const ProductManagement = () => {
       const productData = {
         name: formData[0].value,
         price: parseFloat(formData[1].value),
-        imageUrl: formData[2].value,
+        sizeChart: formData[2].value,
+        availableSizes: formData[3].value,
       };
 
       if (selectedId) {
@@ -173,7 +190,6 @@ const ProductManagement = () => {
             <th>ID</th>
             <th>Name</th>
             <th>Unit Price</th>
-            <th>Image</th>
             <th>Created At</th>
             <th>Actions</th>
           </tr>
@@ -185,11 +201,6 @@ const ProductManagement = () => {
                 <td>{product.id}</td>
                 <td>{product.name}</td>
                 <td>{product.price}</td>
-                <td>
-                  {product.imageUrl && (
-                    <img src={product.imageUrl} width={90} alt={product.name} />
-                  )}
-                </td>
                 <td>{new Date(product.createdAt).toLocaleDateString()}</td>
                 <td>
                   <div className="d-flex gap-2">

@@ -6,11 +6,13 @@ import { logout } from "../../actions/auth";
 import { ROLES } from "../../utils/constants";
 
 const Navbar = () => {
-  const { parentName, role, cartData, name } = useSelector((state) => ({
+  const { parentName, role, cartData, name, enableIndividualProducts, enableBulkProducts } = useSelector((state) => ({
     parentName: state.auth.user.parentName,
     role: state.auth.user.role,
     cartData: state.product.items,
     name: state.auth.user.name,
+    enableIndividualProducts: state.auth.user?.settings?.enableIndividualProducts,
+    enableBulkProducts: state.auth.user?.settings?.enableBulkProducts,
   }));
   const [showProfile, setShowProfile] = useState(false);
   const [showNav, setShowNav] = useState(false);
@@ -49,14 +51,28 @@ const Navbar = () => {
   const getNavItems = () => {
     switch (role) {
       case ROLES.PARENT:
-        return [
+        let mainMenu = [
           { path: "/dashboard", label: "Home" },
           { path: "/profile", label: "Profile" },
           { path: "/children", label: "My Children" },
-          { path: "/products", label: "Buy" },
           { path: "/order/history", label: "My Orders" },
           { path: "/faqs", label: "FAQs" },
-        ];
+        ];;
+        const buySubMenu = [];
+        if (enableBulkProducts) {
+          buySubMenu.push({ path: "/bundles", label: "Bundles" });
+        }
+        if (enableIndividualProducts) {
+          buySubMenu.push({ path: "/products", label: "Products" });
+        }
+        if (buySubMenu.length > 0) {
+          mainMenu.splice(3, 0, {
+            label: "Buy",
+            submenu: buySubMenu,
+          });
+        }
+        return mainMenu;
+         
       case ROLES.ADMIN:
         return [
           { path: "/dashboard", label: "Home" },
@@ -76,6 +92,7 @@ const Navbar = () => {
               { path: "/admin/products", label: "Product Management" },
             ],
           },
+          { path: "/admin/settings", label: "Settings" },
           // { path: "/admin/support", label: "Support Management" },
         ];
       case ROLES.VENDOR:

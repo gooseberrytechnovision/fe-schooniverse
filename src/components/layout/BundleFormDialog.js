@@ -26,6 +26,7 @@ const BundleFormDialog = ({ data, onSave, onCancel, header }) => {
       applicableClasses: "",
       applicableClassesArray: [],
       totalPrice: 0,
+      isIndividualProduct: false,
       products: [{ productId: "", quantity: 1, optional: false }]
     };
   });
@@ -164,7 +165,8 @@ const BundleFormDialog = ({ data, onSave, onCancel, header }) => {
       formData.studentType &&
       formData.applicableClasses &&
       formData.products.length > 0 &&
-      formData.products.every(p => p.productId && p.quantity > 0)
+      formData.products.every(p => p.productId && p.quantity > 0) &&
+      typeof formData.isIndividualProduct === 'boolean'
     );
   };
 
@@ -310,12 +312,56 @@ const BundleFormDialog = ({ data, onSave, onCancel, header }) => {
                     </div>
                   </div>
                 </div>
+                <div className="row mb-3">
+                  <div className="col-md-8">
+                    <div className="form-group mt-2 d-flex align-items-center">
+                      <label className="font-weight-bold d-block mb-1 me-2">Is Individual Product</label>
+                      <div className="form-check form-switch">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          id="isIndividualProduct"
+                          name="isIndividualProduct"
+                          checked={formData.isIndividualProduct || false}
+                          onChange={(e) => {
+                            // If switching to individual product, set all products as non-optional
+                            let updatedProducts = [...formData.products];
+                            if (e.target.checked) {
+                              updatedProducts = [
+                                {
+                                  ...updatedProducts[0],
+                                  optional: false
+                                }
+                              ];
+                            }
+                            
+                            setFormData({
+                              ...formData,
+                              isIndividualProduct: e.target.checked,
+                              products: updatedProducts
+                            });
+                          }}
+                        />
+                        <label className="form-check-label" htmlFor="isIndividualProduct">
+                          {formData.isIndividualProduct ? "Yes" : "No"}
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
-                <div className="row mb-3 mt-4">
+                <div className="row mt-4">
                   <div className="col-12">
                     <h5>Bundle Products</h5>
                     <p className="text-muted small">Add products to this bundle</p>
                   </div>
+                </div>
+                
+                <div className="row mb-2 fw-bold border-bottom pb-2">
+                  <div className="col-md-5">Product</div>
+                  <div className="col-md-2">{formData.isIndividualProduct ? "MOQ" : "Quantity"}</div>
+                  <div className="col-md-3">Optional</div>
+                  <div className="col-md-2">Actions</div>
                 </div>
                 
                 {formData.products.map((product, index) => (
@@ -360,6 +406,7 @@ const BundleFormDialog = ({ data, onSave, onCancel, header }) => {
                           className="form-check-input"
                           checked={product.optional}
                           onChange={() => toggleOptional(index)}
+                          disabled={formData.isIndividualProduct}
                           id={`optional-${index}`}
                         />
                         <label className="form-check-label" htmlFor={`optional-${index}`}>
@@ -372,7 +419,7 @@ const BundleFormDialog = ({ data, onSave, onCancel, header }) => {
                         type="button"
                         className="btn btn-sm btn-danger me-1"
                         onClick={() => removeProductField(index)}
-                        disabled={formData.products.length === 1}
+                        disabled={formData.products.length === 1 || formData.isIndividualProduct}
                       >
                         <Minus size={16} />
                       </button>
@@ -381,6 +428,7 @@ const BundleFormDialog = ({ data, onSave, onCancel, header }) => {
                           type="button"
                           className="btn btn-sm btn-success"
                           onClick={addProductField}
+                          disabled={formData.isIndividualProduct}
                         >
                           <Plus size={16} />
                         </button>

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import "./PopupDialog.css";
 import { findParentByPhone } from "../../actions/product";
+import { Plus, Minus } from "lucide-react";
 
 const PopupDialog = ({ data, onSave, onCancel, header }) => {
   const [formData, setFormData] = useState(data);
@@ -12,6 +13,38 @@ const PopupDialog = ({ data, onSave, onCancel, header }) => {
     if (updatedData[index].label === "Phone Number") {
       handlePhoneChange(updatedData[index].value, updatedData);
     }
+  };
+
+  const handleMultipleEntryChange = (parentIndex, entryIndex, value) => {
+    const updatedData = [...formData];
+    const currentValues = Array.isArray(updatedData[parentIndex].value) 
+      ? updatedData[parentIndex].value 
+      : [];
+    
+    const newValues = [...currentValues];
+    newValues[entryIndex] = value;
+    
+    updatedData[parentIndex].value = newValues;
+    setFormData(updatedData);
+  };
+
+  const addMultipleEntryField = (index) => {
+    const updatedData = [...formData];
+    // Make sure value is an array
+    const currentValues = Array.isArray(updatedData[index].value) 
+      ? updatedData[index].value 
+      : [];
+    
+    updatedData[index].value = [...currentValues, ""];
+    setFormData(updatedData);
+  };
+
+  const removeMultipleEntryField = (parentIndex, entryIndex) => {
+    const updatedData = [...formData];
+    const currentValues = [...updatedData[parentIndex].value];
+    currentValues.splice(entryIndex, 1);
+    updatedData[parentIndex].value = currentValues;
+    setFormData(updatedData);
   };
 
   const handlePhoneChange = async (value, formData) => {
@@ -41,7 +74,21 @@ const PopupDialog = ({ data, onSave, onCancel, header }) => {
     setFormData(updatedData);
   };
   // Check if all fields are filled
-  const isFormValid = formData.every((item) => item?.value?.trim() !== "");
+  const isFormValid = formData.every((item) => {
+    if (item.optional === true && item.options !== "Multiple Entry") {
+      return true;
+    }
+    if(item.options === "Multiple Entry"){
+      if(item.value.length > 0){
+        return item.value.every(val => val.trim() !== "");
+      }
+      if(item.value.length === 0 && item.optional === true){
+        return true;
+      }
+      return false;
+    }
+    return item?.value?.trim() !== "";
+  });
 
   return (
     <div
@@ -86,6 +133,53 @@ const PopupDialog = ({ data, onSave, onCancel, header }) => {
                           </option>
                         ))}
                       </select>
+                    ) : item.options && item.options === "Multiple Entry" ? (
+                      <div>
+                        {Array.isArray(item.value) && item.value.length > 0 ? (
+                          item.value.map((entry, entryIndex) => (
+                            <div key={entryIndex} className="d-flex mb-2 align-items-center">
+                              <input
+                                type="text"
+                                className="form-control me-2"
+                                value={entry}
+                                maxLength={5}
+                                onChange={(e) => handleMultipleEntryChange(index, entryIndex, e.target.value)}
+                              />
+                              <div className="d-flex">
+                                <button
+                                  type="button"
+                                  className="btn btn-sm btn-danger me-1"
+                                  onClick={() => removeMultipleEntryField(index, entryIndex)}
+                                >
+                                  <Minus size={16} />
+                                </button>
+                                {entryIndex === item.value.length - 1 && (
+                                  <button
+                                    type="button"
+                                    className="btn btn-sm btn-success"
+                                    disabled={item.value[entryIndex] === ""}
+                                    onClick={() => addMultipleEntryField(index)}
+                                  >
+                                    <Plus size={16} />
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-success"
+                            onClick={() => {
+                              const updatedData = [...formData];
+                              updatedData[index].value = [""];
+                              setFormData(updatedData);
+                            }}
+                          >
+                            <Plus size={16} /> Add Entry
+                          </button>
+                        )}
+                      </div>
                     ) : (
                       // Text Input Field
                       <input
@@ -99,7 +193,7 @@ const PopupDialog = ({ data, onSave, onCancel, header }) => {
                   ) : (
                     // Read-only Text
                     <p className="form-control-plaintext text-start">
-                      {item.value}
+                      {Array.isArray(item.value) ? item.value.join(", ") : item.value}
                     </p>
                   )}
                 </div>

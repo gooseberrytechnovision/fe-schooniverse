@@ -75,3 +75,28 @@ export const fetchAllVendors = async () => {
     return error;
   }
 };
+
+export const fetchGlobalSettings = async () => {
+  try {
+    const res = await get("/settings");
+    return res.data;
+  } catch (error) {
+    toast.error(error.message, { position: "top-right" });
+    return error;
+  }
+};
+
+export const updateGlobalSettings = async (settingsData) => {
+  try {
+    const res = await patch("/settings", settingsData);
+    if(res.data.success){
+      toast.success("Settings updated successfully!", { position: "top-right" });
+    } else {
+      toast.error(res.data.message, { position: "top-right" });
+    }
+    return res.data;
+  } catch (error) {
+    toast.error(error.message, { position: "top-right" });
+    return error;
+  }
+};
