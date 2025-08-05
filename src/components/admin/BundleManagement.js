@@ -60,6 +60,7 @@ const BundleManagement = () => {
       applicable_classes: bundle.applicableClasses,
       class_name: bundle.applicableClasses.split(", ")[0],
       bundle_total: parseFloat(bundle.totalPrice),
+      isIndividualProduct: bundle.isIndividualProduct,
       products: bundle.bundleProducts.map((bp) => ({
         product_id: bp.product.id,
         product_name: bp.product.name,
@@ -88,6 +89,7 @@ const BundleManagement = () => {
       gender: bundle.gender,
       studentType: bundle.studentType,
       applicableClasses: bundle.applicableClasses,
+      isIndividualProduct: bundle.isIndividualProduct,
       totalPrice: parseFloat(bundle.totalPrice),
       products: bundle.bundleProducts.length > 0 ? bundle.bundleProducts.map(bp => ({
         productId: bp.product.id.toString(),
@@ -115,6 +117,7 @@ const BundleManagement = () => {
         gender: formData.gender,
         studentType: formData.studentType,
         applicableClasses: formData.applicableClasses,
+        isIndividualProduct: formData.isIndividualProduct,
         totalPrice: formData.totalPrice,
         products: formData.products.map(p => ({
           productId: parseInt(p.productId),
