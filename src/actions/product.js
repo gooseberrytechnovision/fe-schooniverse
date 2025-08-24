@@ -346,10 +346,12 @@ export const deleteBundle = async (id) => {
   }
 };
 
-export const updateProductSize = async (sizeData) => {
+export const updateProductSize = async (sizeData, showToast = true) => {
   try {
     const res = await post("/sizes", sizeData);
-    toast.success("Size updated successfully!", { position: "top-right" });
+    if (showToast) {
+      toast.success("Size updated successfully!", { position: "top-right" });
+    }
     return res.data;
   } catch (error) {
     toast.error(error.message, { position: "top-right" });

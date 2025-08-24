@@ -122,7 +122,7 @@ const ProductListing = ({ isBundle = false }) => {
         productId: filteredBundles.find(b => b.bundle_id === bundleId)?.products[0]?.product_id
       };
 
-      updateProductSize(sizeData);
+      updateProductSize(sizeData, false);
     }
 
     setLoading(true);
