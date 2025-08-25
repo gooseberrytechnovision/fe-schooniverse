@@ -202,7 +202,7 @@ const ProductListing = ({ isBundle = false }) => {
             {filteredBundles.map((bundle, index) => (
               <div
                 key={`${bundle.bundle_id}-${index}`}
-                className="col-12 col-sm-6 col-md-6"
+                className="col-12 col-sm-6 col-md-6 col-xl-4"
               >
                 <div className="card product-card shadow-sm border-0 h-100">
                   <div className="position-relative">

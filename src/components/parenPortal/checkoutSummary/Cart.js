@@ -148,7 +148,7 @@ const CartPage = () => {
                         {item.student?.house || "-"}
                       </p>
                       <p className="small mb-2">
-                        <strong>Bundle Quantity:</strong>{" "}
+                        <strong>{item.bundle?.isIndividualProduct?'Product':'Bundle'} Quantity:</strong>{" "}
                         1
                       </p>
                     </div>
