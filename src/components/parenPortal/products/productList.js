@@ -35,10 +35,20 @@ const ProductListing = ({ isBundle = false }) => {
             return fetchLinkedBundles(id, type, !isBundle);
           })
         );
-        const updatedBundles = bundleResponses.flat().map((bundle, index) => ({
+   
+        const updatedBundles = bundleResponses.flatMap(
+          (bundles, studentIndex) => {
+          
+            const student = user.studentData[studentIndex];
+          
+            return bundles.map((bundle) => ({
           ...bundle,
-          student: user.studentData[index % user.studentData.length], // Assign student
+              student: student,
+              gender: student?.gender,
+              class_name: student?.class,
         }));
+          }
+        );
         setBundles(updatedBundles);
 
         // Initialize quantities and sizes state for all bundles
@@ -82,6 +92,16 @@ const ProductListing = ({ isBundle = false }) => {
     }
     setBundles(sortedBundles);
   };
+  // Get quantity limits for a specific bundle
+  const getQuantityLimits = (bundle) => {
+    const defaultQuantity = bundle?.products[0]?.quantity || 1;
+
+    if (defaultQuantity === 2) {
+      return { min: 2, max: 3 }; // Products with default 2 can go from 2 to 3
+    } else {
+      return { min: 1, max: 2 }; // Products with default 1 can go from 1 to 2
+    }
+  };
 
   // Handler for size updates in the bundle
   const handleBundleSizeUpdate = (updatedBundle) => {
@@ -89,17 +109,24 @@ const ProductListing = ({ isBundle = false }) => {
     setSelectedBundle(updatedBundle);
 
     // Update the bundle in the main list
-    setBundles(prevBundles =>
-      prevBundles.map(bundle =>
+    setBundles((prevBundles) =>
+      prevBundles.map((bundle) =>
         bundle.bundle_id === updatedBundle.bundle_id ? updatedBundle : bundle
       )
     );
   };
 
   const handleQuantityChange = (bundleId, value) => {
-    setQuantities(prev => ({
+ 
+    const numValue = Number(value);
+
+    const bundle = bundles.find((b) => b.bundle_id === bundleId);
+    const limits = getQuantityLimits(bundle);
+    const clampedValue = Math.max(limits.min, Math.min(numValue, limits.max));
+
+    setQuantities((prev) => ({
       ...prev,
-      [bundleId]: value
+      [bundleId]: clampedValue,
     }));
   };
 
@@ -243,8 +270,14 @@ const ProductListing = ({ isBundle = false }) => {
                           className="form-control form-control-sm"
                           style={{ width: "70px" }}
                           value={quantities[bundle.bundle_id] || 1}
-                          onChange={(e) => handleQuantityChange(bundle.bundle_id, e.target.value)}
-                          min={bundle?.products[0]?.quantity || 1}
+                            onChange={(e) =>
+                              handleQuantityChange(
+                                bundle.bundle_id,
+                                e.target.value
+                              )
+                            }
+                            min={getQuantityLimits(bundle).min} //  Dynamic min
+                            max={getQuantityLimits(bundle).max}
                         />
                       </div>
 

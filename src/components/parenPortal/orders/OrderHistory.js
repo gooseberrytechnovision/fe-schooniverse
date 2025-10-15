@@ -39,18 +39,24 @@ const OrderHistory = () => {
     const order = e.target.value;
     setSortOrder(order);
     const sortedOrders = [...orders].sort((a, b) => {
-      return order === "Latest"
-        ? new Date(b.date.split("-").reverse().join("-")) -
-            new Date(a.date.split("-").reverse().join("-"))
-        : new Date(a.date.split("-").reverse().join("-")) -
-            new Date(b.date.split("-").reverse().join("-"));
+      const dateA = new Date(a.createdAt);
+      const dateB = new Date(b.createdAt);
+
+      if (order === "Latest") {
+        return dateB - dateA; // Newest first
+      } else {
+        return dateA - dateB; // Oldest first
+      }
     });
+
     setOrders(sortedOrders);
   };
 
   const handleDownloadReceipt = async (orderId) => {
+    // Log the specific order data to see what's being passed
+    const currentOrder = orders.find((order) => order.id === orderId);
     try {
-      setDownloadingIds(prev => new Set([...prev, orderId]));
+      setDownloadingIds((prev) => new Set([...prev, orderId]));
       await downloadPaymentReceipt(orderId);
       toast.success("Receipt downloaded successfully!", { position: "top-right" });
     } catch (error) {
@@ -117,7 +123,14 @@ const OrderHistory = () => {
                 <td>{getBundleNames(order)}</td>
                 <td>{order.transactionStatus}</td>
                 <td>{order.status}</td>
-                <td>{order.items?.length}</td>
+                <td>
+                  {order.items
+                    ? order.items.reduce(
+                        (sum, item) => sum + (item.quantity || 0),
+                        0
+                      )
+                    : 0}
+                </td>
                 <td>{order.totalPrice}</td>
                 <td>{order.createdAt?.split("T")[0]}</td>
                 <td>

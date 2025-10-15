@@ -60,7 +60,7 @@ const createReceiptHTML = (cartItem, paymentData) => {
   const bundle = cartItem.bundle;
   const bundleProducts = bundle.bundleProducts || [];
   const totalAmount = parseFloat(paymentData.amount || 0);
-
+  const itemQuantity = cartItem.quantity || 1;
   return `
     <div style="
       width: 794px; 
@@ -254,7 +254,7 @@ const createReceiptHTML = (cartItem, paymentData) => {
                   padding: 10px; 
                   text-align: center; 
                   font-size: 12px;
-                ">${product.quantity || '1'}</td>
+                ">${itemQuantity || "1"}</td>
                 <td style="
                   border: 1px solid black; 
                   padding: 10px; 
