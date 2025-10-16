@@ -20,6 +20,7 @@ const CartPage = () => {
   }));
   const [totalPrice, setTotalPrice] = useState(0);
   const [totalQuantity, setTotalQuantity] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
 
   useEffect(() => {
     const fetchCartItems = () => {
@@ -35,19 +36,21 @@ const CartPage = () => {
   useEffect(() => {
     if (cartData?.items?.length) {
       const total = cartData.items.reduce(
-        (acc, item) => acc + item.price * item.quantity,
+        (acc, item) => acc + item.price * 1,
         0
       );
       const quantity = cartData.items.reduce(
         (acc, item) => acc + item.quantity,
         0
       );
-
+      const items = cartData.items.length;
       setTotalPrice(total);
       setTotalQuantity(quantity);
+      setTotalItems(items);
     } else {
       setTotalPrice(0);
       setTotalQuantity(0);
+      setTotalItems(0);
     }
   }, [cartData?.items]);
 
@@ -144,8 +147,7 @@ const CartPage = () => {
                         {item.bundle.studentType || "Existing"} Student
                       </p>
                       <p className="small mb-2">
-                        <strong>House:</strong>{" "}
-                        {item.student?.house || "-"}
+                        <strong>House:</strong> {item.student?.house || "-"}
                       </p>
                       <p className="small mb-2">
                         <strong>
@@ -176,7 +178,7 @@ const CartPage = () => {
             <div className="card p-4 shadow-lg border-0 rounded">
               <h4 className="text-center mb-3 text-primary">🛍 Cart Summary</h4>
               <p className="d-flex justify-content-between fw-bold">
-                <span>Total Items:</span> <span>{totalQuantity}</span>
+                <span>Total Items:</span> <span>{totalItems}</span>
               </p>
               <p className="d-flex justify-content-between text-dark fw-bold">
                 <span>Total Price:</span> <strong>₹{totalPrice}</strong>
