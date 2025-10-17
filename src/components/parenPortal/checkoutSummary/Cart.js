@@ -22,6 +22,25 @@ const CartPage = () => {
   const [totalQuantity, setTotalQuantity] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
 
+  const specialProducts = ["Strp Sox", "Cycling Shorts"];
+
+  const getPriceByQuantity = (quantity, productName, basePrice) => {
+    const price = parseFloat(basePrice) || 0;
+
+    const isSpecialProduct = specialProducts.some((special) =>
+      productName?.includes(special)
+    );
+
+    if (isSpecialProduct && price > 0) {
+      const quantityMap = {
+        2: price,
+      };
+      return quantityMap[quantity] || quantity * (price / 2);
+    }
+
+    return null;
+  };
+
   useEffect(() => {
     const fetchCartItems = () => {
       try {
@@ -35,24 +54,34 @@ const CartPage = () => {
 
   useEffect(() => {
     if (cartData?.items?.length) {
-      const total = cartData.items.reduce(
-        (acc, item) => acc + item.price * 1,
-        0
-      );
+      const total = cartData.items.reduce((acc, item) => {
+        const specialPrice = getPriceByQuantity(
+          item.quantity,
+          item.bundle?.name,
+          item.price
+        );
+
+        if (specialPrice !== null) {
+          return acc + specialPrice;
+        } else {
+          return acc + parseFloat(item.price * item.quantity);
+        }
+      }, 0);
+
       const quantity = cartData.items.reduce(
-        (acc, item) => acc + item.quantity,
+        (acc, item) => acc + parseFloat(item.quantity),
         0
       );
       const items = cartData.items.length;
-      setTotalPrice(total);
-      setTotalQuantity(quantity);
+      setTotalPrice(total.toFixed(2));
       setTotalItems(items);
     } else {
       setTotalPrice(0);
-      setTotalQuantity(0);
       setTotalItems(0);
     }
   }, [cartData?.items]);
+
+  console.log("🛒 Updated cart data:", cartData);
 
   const handleQuantityChange = (bundleId, quantity, student) => {
     dispatch(loadingCartChange(true));
@@ -126,7 +155,21 @@ const CartPage = () => {
                       <h5 className="card-title text-dark fw-bold">
                         {item.bundle?.name}
                       </h5>
-                      <p className="text-muted">₹{item.price}</p>
+
+                      <p className="text-muted">
+                        ₹
+                        {getPriceByQuantity(
+                          item.quantity,
+                          item.bundle?.name,
+                          item.price
+                        ) !== null
+                          ? getPriceByQuantity(
+                              item.quantity,
+                              item.bundle?.name,
+                              item.price
+                            ).toFixed(2)
+                          : parseFloat(item.price).toFixed(2)}
+                      </p>
                       <p className="small mb-2">
                         <strong>Student Name:</strong>{" "}
                         {item.student?.studentName || "--"}
@@ -134,10 +177,6 @@ const CartPage = () => {
                       <p className="small mb-2">
                         <strong>Class:</strong> {item.student?.class || "--"}
                       </p>
-                      {/* <p className="small mb-1">
-                        <strong>Recommended For:</strong>{" "}
-                        {item.bundle.applicableClasses || "N/A"}
-                      </p> */}
                       <p className="small mb-1">
                         <strong>Gender:</strong>{" "}
                         {item.bundle.gender || "Unisex"}
@@ -187,7 +226,7 @@ const CartPage = () => {
                 className="btn btn-primary w-100 mt-3 "
                 onClick={handleCheckout}
               >
-                Proceed to Checkout 🛒
+                Proceed to Checkout
               </button>
             </div>
           </div>

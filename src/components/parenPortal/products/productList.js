@@ -28,38 +28,57 @@ const ProductListing = ({ isBundle = false }) => {
     }
 
     try {
-      if ((isBundle && user?.settings?.enableBulkProducts) || (!isBundle && user?.settings?.enableIndividualProducts)) {
+      if (
+        (isBundle && user?.settings?.enableBulkProducts) ||
+        (!isBundle && user?.settings?.enableIndividualProducts)
+      ) {
+        const studentMap = {};
+        user.students.forEach((studentId, index) => {
+          studentMap[studentId] = user.studentData[index];
+        });
+
         const bundleResponses = await Promise.all(
           user.students.map((id, index) => {
             let type = user?.studentData[index]?.studentType;
             return fetchLinkedBundles(id, type, !isBundle);
           })
         );
-   
-        const updatedBundles = bundleResponses.flatMap(
-          (bundles, studentIndex) => {
-          
-            const student = user.studentData[studentIndex];
-          
-            return bundles.map((bundle) => ({
-          ...bundle,
-              student: student,
-              gender: student?.gender,
-              class_name: student?.class,
-        }));
+
+        const updatedBundles = [];
+        let bundleIndex = 0;
+
+        bundleResponses.forEach((bundlesArray, studentIndex) => {
+          const studentData = user.studentData[studentIndex];
+
+          if (Array.isArray(bundlesArray)) {
+            bundlesArray.forEach((bundle) => {
+              updatedBundles.push({
+                ...bundle,
+                student: studentData,
+              });
+            });
+          } else {
+            updatedBundles.push({
+              ...bundlesArray,
+              student: studentData,
+            });
           }
-        );
+        });
+
         setBundles(updatedBundles);
 
-        // Initialize quantities and sizes state for all bundles
         const initialQuantities = {};
         const initialSizes = {};
-        updatedBundles.forEach(bundle => {
-          initialQuantities[bundle.bundle_id] = bundle?.products[0]?.quantity || 1;
+        updatedBundles.forEach((bundle) => {
+          initialQuantities[bundle.bundle_id] =
+            bundle?.products[0]?.quantity || 1;
 
-          // Set default size to the first available size if there are any
-          if (bundle?.products[0]?.availableSizes && bundle.products[0].availableSizes.length > 0) {
-            initialSizes[bundle.bundle_id] = bundle.products[0].availableSizes[0];
+          if (
+            bundle?.products[0]?.availableSizes &&
+            bundle.products[0].availableSizes.length > 0
+          ) {
+            initialSizes[bundle.bundle_id] =
+              bundle.products[0].availableSizes[0];
           } else {
             bundle.products[0].availableSizes = ["Free-NA"];
             initialSizes[bundle.bundle_id] = "Free-NA";
@@ -74,7 +93,6 @@ const ProductListing = ({ isBundle = false }) => {
       setLoading(false);
     }
   };
-
   useEffect(() => {
     setLoading(true);
     dispatch(loadUser());
@@ -92,12 +110,11 @@ const ProductListing = ({ isBundle = false }) => {
     }
     setBundles(sortedBundles);
   };
-  // Get quantity limits for a specific bundle
   const getQuantityLimits = (bundle) => {
     const defaultQuantity = bundle?.products[0]?.quantity || 1;
 
     if (defaultQuantity === 2) {
-      return { min: 2, max: 3 }; // Products with default 2 can go from 2 to 3
+      return { min: 2, max: 2 }; // Products with default 2 can go from 2 to 3
     } else {
       return { min: 1, max: 2 }; // Products with default 1 can go from 1 to 2
     }
@@ -117,13 +134,11 @@ const ProductListing = ({ isBundle = false }) => {
   };
 
   const handleQuantityChange = (bundleId, value) => {
- 
     const numValue = Number(value);
 
     const bundle = bundles.find((b) => b.bundle_id === bundleId);
     const limits = getQuantityLimits(bundle);
     const clampedValue = Math.max(limits.min, Math.min(numValue, limits.max));
-
     setQuantities((prev) => ({
       ...prev,
       [bundleId]: clampedValue,
@@ -131,22 +146,25 @@ const ProductListing = ({ isBundle = false }) => {
   };
 
   const handleSizeChange = (bundle, size) => {
-    setSelectedSizes(prev => ({
+    setSelectedSizes((prev) => ({
       ...prev,
-      [bundle.bundle_id]: size
+      [bundle.bundle_id]: size,
     }));
   };
 
   const addToCartClick = async (bundleId, quantity, studentId) => {
     if (!user?.settings?.enablePurchasing) {
-      toast.error("Purchasing is currently disabled by the administrator.", { position: "top-right" });
+      toast.error("Purchasing is currently disabled by the administrator.", {
+        position: "top-right",
+      });
       return;
     }
     if (!isBundle) {
       const sizeData = {
         size: selectedSizes[bundleId],
         studentId: studentId,
-        productId: filteredBundles.find(b => b.bundle_id === bundleId)?.products[0]?.product_id
+        productId: filteredBundles.find((b) => b.bundle_id === bundleId)
+          ?.products[0]?.product_id,
       };
 
       updateProductSize(sizeData, false);
@@ -178,19 +196,28 @@ const ProductListing = ({ isBundle = false }) => {
       <div className="container py-5 my-10 text-center">
         <div className="alert alert-info" role="alert">
           <h4 className="alert-heading">Purchasing Temporarily Unavailable</h4>
-          <p>Product purchasing is currently disabled by the administrator. Please check back later.</p>
+          <p>
+            Product purchasing is currently disabled by the administrator.
+            Please check back later.
+          </p>
         </div>
       </div>
     );
   }
 
   // Check if all product types are disabled
-  if (!user?.settings?.enableIndividualProducts && !user?.settings?.enableBulkProducts) {
+  if (
+    !user?.settings?.enableIndividualProducts &&
+    !user?.settings?.enableBulkProducts
+  ) {
     return (
       <div className="container py-5 my-10 text-center">
         <div className="alert alert-info" role="alert">
           <h4 className="alert-heading">Products Temporarily Unavailable</h4>
-          <p>Product purchasing is currently disabled by the administrator. Please check back later.</p>
+          <p>
+            Product purchasing is currently disabled by the administrator.
+            Please check back later.
+          </p>
         </div>
       </div>
     );
@@ -239,14 +266,16 @@ const ProductListing = ({ isBundle = false }) => {
                       alt={bundle.name}
                       style={{ maxHeight: "350px" }}
                     />
-                    {isBundle && <div className="card-img-overlay d-flex justify-content-center align-items-center">
-                      <button
-                        className="btn btn-primary"
-                        onClick={() => setSelectedBundle(bundle)}
-                      >
-                        Quick View
-                      </button>
-                    </div>}
+                    {isBundle && (
+                      <div className="card-img-overlay d-flex justify-content-center align-items-center">
+                        <button
+                          className="btn btn-primary"
+                          onClick={() => setSelectedBundle(bundle)}
+                        >
+                          Quick View
+                        </button>
+                      </div>
+                    )}
                   </div>
                   <div className="card-body text-center d-flex flex-column">
                     <h5 className="card-title fw-bold">{bundle.bundle_name}</h5>
@@ -255,21 +284,28 @@ const ProductListing = ({ isBundle = false }) => {
                       <span>{bundle.student?.studentName}</span>
                       <strong>Gender:</strong> <span>{bundle.gender}</span>
                       <strong>Class:</strong> <span>{bundle.class_name}</span>
-                      <strong>House:</strong> <span>{bundle.student?.house}</span>
+                      <strong>House:</strong>{" "}
+                      <span>{bundle.student?.house}</span>
                     </div>
                     <p className="fw-bold text-primary fs-5">
                       ₹{bundle.bundle_total}
                     </p>
 
-                    {!isBundle && <div className="d-flex justify-content-center mb-3">
-                      <div className="me-3">
-                        <label htmlFor={`quantity-${bundle.bundle_id}`} className="d-block mb-1 text-start">Quantity:</label>
-                        <input
-                          id={`quantity-${bundle.bundle_id}`}
-                          type="number"
-                          className="form-control form-control-sm"
-                          style={{ width: "70px" }}
-                          value={quantities[bundle.bundle_id] || 1}
+                    {!isBundle && (
+                      <div className="d-flex justify-content-center mb-3">
+                        <div className="me-3">
+                          <label
+                            htmlFor={`quantity-${bundle.bundle_id}`}
+                            className="d-block mb-1 text-start"
+                          >
+                            Quantity:
+                          </label>
+                          <input
+                            id={`quantity-${bundle.bundle_id}`}
+                            type="number"
+                            className="form-control form-control-sm"
+                            style={{ width: "70px" }}
+                            value={quantities[bundle.bundle_id] || 1}
                             onChange={(e) =>
                               handleQuantityChange(
                                 bundle.bundle_id,
@@ -278,35 +314,61 @@ const ProductListing = ({ isBundle = false }) => {
                             }
                             min={getQuantityLimits(bundle).min} //  Dynamic min
                             max={getQuantityLimits(bundle).max}
-                        />
-                      </div>
-
-                      {bundle?.products[0]?.availableSizes && bundle.products[0].availableSizes.length > 0 && (
-                        <div>
-                          <label htmlFor={`size-${bundle.bundle_id}`} className="d-block mb-1 text-start">Size:</label>
-                          <select
-                            id={`size-${bundle.bundle_id}`}
-                            className="form-select form-select-sm"
-                            style={{ width: "80px" }}
-                            value={selectedSizes[bundle.bundle_id] || bundle.products[0].availableSizes[0]}
-                            onChange={(e) => handleSizeChange(bundle, e.target.value)}
-                          >
-                            {bundle.products[0].availableSizes.map((size, idx) => (
-                              <option key={idx} value={size}>{size}</option>
-                            ))}
-                          </select>
+                          />
                         </div>
-                      )}
-                    </div>}
+
+                        {bundle?.products[0]?.availableSizes &&
+                          bundle.products[0].availableSizes.length > 0 && (
+                            <div>
+                              <label
+                                htmlFor={`size-${bundle.bundle_id}`}
+                                className="d-block mb-1 text-start"
+                              >
+                                Size:
+                              </label>
+                              <select
+                                id={`size-${bundle.bundle_id}`}
+                                className="form-select form-select-sm"
+                                style={{ width: "80px" }}
+                                value={
+                                  selectedSizes[bundle.bundle_id] ||
+                                  bundle.products[0].availableSizes[0]
+                                }
+                                onChange={(e) =>
+                                  handleSizeChange(bundle, e.target.value)
+                                }
+                              >
+                                {bundle.products[0].availableSizes.map(
+                                  (size, idx) => (
+                                    <option key={idx} value={size}>
+                                      {size}
+                                    </option>
+                                  )
+                                )}
+                              </select>
+                            </div>
+                          )}
+                      </div>
+                    )}
 
                     <button
-                      className={`btn ${bundle.isAlreadyPurchased ? "btn-secondary" : "btn-outline-primary"} mt-auto`}
+                      className={`btn ${
+                        bundle.isAlreadyPurchased
+                          ? "btn-secondary"
+                          : "btn-outline-primary"
+                      } mt-auto`}
                       onClick={() =>
-                        addToCartClick(bundle.bundle_id, isBundle ? 1 : quantities[bundle.bundle_id] || 1, bundle.student.id)
+                        addToCartClick(
+                          bundle.bundle_id,
+                          isBundle ? 1 : quantities[bundle.bundle_id] || 1,
+                          bundle.student.id
+                        )
                       }
                       disabled={bundle.isAlreadyPurchased}
                     >
-                      {bundle.isAlreadyPurchased ? "Already Purchased" : "Add to Cart"}
+                      {bundle.isAlreadyPurchased
+                        ? "Already Purchased"
+                        : "Add to Cart"}
                     </button>
                   </div>
                 </div>
